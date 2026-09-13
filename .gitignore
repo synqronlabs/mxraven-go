@@ -35,3 +35,5 @@ openapi/
 # Editor/IDE
 # .idea/
 # .vscode/
+
+tmp/
