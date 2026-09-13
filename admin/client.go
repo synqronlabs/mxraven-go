@@ -33,7 +33,7 @@ type config struct {
 // New creates a control-plane client.
 //
 // A base URL and an authentication source are required. The base URL should
-// include the scheme and host, for example "https://control.example.com".
+// include the scheme and host, for example "https://api.mxraven.com".
 // Configure authentication with [WithToken] or [WithTokenSource].
 //
 // New returns an error if any option is invalid or if a required option is
@@ -66,7 +66,7 @@ func New(opts ...Option) (*Client, error) {
 }
 
 // WithBaseURL sets the API base URL, for example
-// "https://control.example.com". The value must not be empty.
+// "https://api.mxraven.com". The value must not be empty.
 func WithBaseURL(baseURL string) Option {
 	return func(cfg *config) error {
 		if strings.TrimSpace(baseURL) == "" {

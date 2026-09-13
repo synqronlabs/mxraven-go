@@ -12,7 +12,7 @@
 // like:
 //
 //	client, err := admin.New(
-//		admin.WithBaseURL("https://control.example.com"),
+//		admin.WithBaseURL("https://api.mxraven.com"),
 //		admin.WithToken(token),
 //	)
 //	if err != nil {

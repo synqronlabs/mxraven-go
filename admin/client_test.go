@@ -39,7 +39,7 @@ func TestNewValidation(t *testing.T) {
 		},
 		{
 			name:    "missing auth",
-			opts:    []admin.Option{admin.WithBaseURL("https://control.example.com")},
+			opts:    []admin.Option{admin.WithBaseURL("https://api.mxraven.com")},
 			wantErr: true,
 		},
 		{
@@ -54,22 +54,22 @@ func TestNewValidation(t *testing.T) {
 		},
 		{
 			name:    "empty token",
-			opts:    []admin.Option{admin.WithBaseURL("https://control.example.com"), admin.WithToken("")},
+			opts:    []admin.Option{admin.WithBaseURL("https://api.mxraven.com"), admin.WithToken("")},
 			wantErr: true,
 		},
 		{
 			name:    "nil token source",
-			opts:    []admin.Option{admin.WithBaseURL("https://control.example.com"), admin.WithTokenSource(nil)},
+			opts:    []admin.Option{admin.WithBaseURL("https://api.mxraven.com"), admin.WithTokenSource(nil)},
 			wantErr: true,
 		},
 		{
 			name:    "nil HTTP client",
-			opts:    []admin.Option{admin.WithBaseURL("https://control.example.com"), admin.WithToken("secret"), admin.WithHTTPClient(nil)},
+			opts:    []admin.Option{admin.WithBaseURL("https://api.mxraven.com"), admin.WithToken("secret"), admin.WithHTTPClient(nil)},
 			wantErr: true,
 		},
 		{
 			name: "valid",
-			opts: []admin.Option{admin.WithBaseURL("https://control.example.com"), admin.WithToken("secret")},
+			opts: []admin.Option{admin.WithBaseURL("https://api.mxraven.com"), admin.WithToken("secret")},
 		},
 	}
 
@@ -210,7 +210,7 @@ func TestWithHTTPClientAndUserAgent(t *testing.T) {
 	})
 
 	client, err := admin.New(
-		admin.WithBaseURL("https://control.example.com"),
+		admin.WithBaseURL("https://api.mxraven.com"),
 		admin.WithToken("secret"),
 		admin.WithUserAgent("mxraven-go-test"),
 		admin.WithHTTPClient(&http.Client{Transport: transport}),

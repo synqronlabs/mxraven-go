@@ -108,7 +108,7 @@ func TestRetryTransport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://control.example.com/v2/tenants/acme", nil)
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://api.mxraven.com/v2/tenants/acme", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -171,7 +171,7 @@ func TestRetryTransportReplaysBody(t *testing.T) {
 		sleep:  func(context.Context, time.Duration) error { return nil },
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://control.example.com/v2/tenants", strings.NewReader(`{"slug":"acme"}`))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://api.mxraven.com/v2/tenants", strings.NewReader(`{"slug":"acme"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +199,7 @@ func TestRetryTransportDoesNotRetryUnreplayableBody(t *testing.T) {
 		sleep:  func(context.Context, time.Duration) error { return nil },
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://control.example.com/v2/tenants", io.NopCloser(strings.NewReader("body")))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://api.mxraven.com/v2/tenants", io.NopCloser(strings.NewReader("body")))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,7 +232,7 @@ func TestRetryTransportContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://control.example.com/v2/tenants/acme", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.mxraven.com/v2/tenants/acme", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

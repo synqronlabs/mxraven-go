@@ -31,7 +31,7 @@ import (
 
 func main() {
 	client, err := admin.New(
-		admin.WithBaseURL("https://control.example.com"),
+		admin.WithBaseURL("https://api.mxraven.com"),
 		admin.WithToken("your-access-token"),
 	)
 	if err != nil {
@@ -193,7 +193,7 @@ response headers.
 
 | Option | Description |
 | --- | --- |
-| `WithBaseURL(string)` | Required. API base URL, e.g. `https://control.example.com`. |
+| `WithBaseURL(string)` | Required. API base URL, e.g. `https://api.mxraven.com`. |
 | `WithToken(string)` | Static bearer token. |
 | `WithTokenSource(func(ctx, operation) (string, error))` | Per-request token source. |
 | `WithHTTPClient(*http.Client)` | Custom client for timeouts, proxies, and transports. |
