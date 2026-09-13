@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ogen-go/ogen/v1.24.0/schemas/ogen.jsonschema.json
+#
+# ogen policy for the public admin SDK client. This intentionally differs from
+# OpenAPI v2's server generator policy (../openapi/v2/ogen.yaml):
+#
+#   - Only client paths are generated. The SDK never implements the server
+#     side of the contract, so server and webhook handlers/routers are off.
+#   - Convenient errors stay off. Ogen can only reduce errors when the contract
+#     declares a catch-all "default" response, which the authoritative v2
+#     contract deliberately omits.
+#   - Request validation is enabled so malformed arguments fail before they
+#     reach the network.
+#
+# The authoritative HTTP contract is proprietary and lives at
+# ../openapi/v2/openapi.yaml during development. Generation reads the
+# tenant-only copy produced by tools/openapifilter at
+# ../openapi/public/v2/openapi.yaml; neither path is committed.
+
+parser:
+  allow_remote: true
+  allow_cross_type_constraints: false
+
+generator:
+  convenient_errors: off
+  features:
+    enable:
+      - client/request/validation
+    disable:
+      - paths/server
+      - webhooks/server
+      - ogen/otel
+      - ogen/unimplemented
+      - server/response/validation
