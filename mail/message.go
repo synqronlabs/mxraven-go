@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"mime/quotedprintable"
 	"net/textproto"
 	"strings"
 	"time"
@@ -261,9 +262,21 @@ func (m *Message) build() (*ravenmail.Mail, error) {
 		}
 		builder.Body(body, contentType, encoding)
 	case m.html != "":
-		builder.HTMLBody(m.html)
+		if needsQuotedPrintable(m.html) {
+			if err := setQuotedPrintableBody(builder, m.html, "text/html; charset=utf-8"); err != nil {
+				return nil, err
+			}
+		} else {
+			builder.HTMLBody(m.html)
+		}
 	case m.text != "":
-		builder.TextBody(m.text)
+		if needsQuotedPrintable(m.text) {
+			if err := setQuotedPrintableBody(builder, m.text, "text/plain; charset=utf-8"); err != nil {
+				return nil, err
+			}
+		} else {
+			builder.TextBody(m.text)
+		}
 	}
 	for _, attachment := range m.attachments {
 		if attachment.Inline {
@@ -308,14 +321,18 @@ func buildAlternative(text, html string) ([]byte, string, ravenmail.ContentTrans
 		{"text/html; charset=utf-8", html},
 	}
 	for _, part := range parts {
+		body, partEncoding, err := encodeAlternativePart(part.body, encoding)
+		if err != nil {
+			return nil, "", "", err
+		}
 		header := textproto.MIMEHeader{}
 		header.Set("Content-Type", part.contentType)
-		header.Set("Content-Transfer-Encoding", string(encoding))
+		header.Set("Content-Transfer-Encoding", string(partEncoding))
 		partWriter, err := writer.CreatePart(header)
 		if err != nil {
 			return nil, "", "", fmt.Errorf("mail: build alternative part: %w", err)
 		}
-		if _, err := io.WriteString(partWriter, normalizeCRLF(part.body)); err != nil {
+		if _, err := partWriter.Write(body); err != nil {
 			return nil, "", "", fmt.Errorf("mail: write alternative part: %w", err)
 		}
 	}
@@ -323,6 +340,83 @@ func buildAlternative(text, html string) ([]byte, string, ravenmail.ContentTrans
 		return nil, "", "", fmt.Errorf("mail: close alternative body: %w", err)
 	}
 	return buf.Bytes(), "multipart/alternative; boundary=" + writer.Boundary(), encoding, nil
+}
+
+// setQuotedPrintableBody replaces a single text or HTML body with its
+// quoted-printable encoded form, which satisfies the RFC 5322 line-length limit
+// without altering the decoded content.
+func setQuotedPrintableBody(builder *ravenmail.MailBuilder, body, contentType string) error {
+	encoded, err := encodeQuotedPrintable(body)
+	if err != nil {
+		return err
+	}
+	builder.Body(encoded, contentType, ravenmail.EncodingQuotedPrintable)
+	return nil
+}
+
+// encodeAlternativePart returns the wire bytes and transfer encoding for one
+// alternative part. Parts with a line longer than the RFC 5322 limit are
+// quoted-printable encoded; the rest keep the shared base encoding derived from
+// the bodies' character set.
+func encodeAlternativePart(body string, base ravenmail.ContentTransferEncoding) ([]byte, ravenmail.ContentTransferEncoding, error) {
+	if !needsQuotedPrintable(body) {
+		return []byte(normalizeCRLF(body)), base, nil
+	}
+	encoded, err := encodeQuotedPrintable(body)
+	if err != nil {
+		return nil, "", err
+	}
+	return encoded, ravenmail.EncodingQuotedPrintable, nil
+}
+
+// needsQuotedPrintable reports whether body has a line longer than the RFC 5322
+// limit and therefore must be transfer-encoded before submission.
+func needsQuotedPrintable(body string) bool {
+	return longestLine(normalizeCRLF(body)) > ravenmail.MaxLineLength
+}
+
+// longestLine returns the byte length of the longest line in s, treating LF,
+// CRLF, and a bare CR as line separators.
+func longestLine(s string) int {
+	longest, current := 0, 0
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '\n':
+			if current > longest {
+				longest = current
+			}
+			current = 0
+		case '\r':
+			if current > longest {
+				longest = current
+			}
+			current = 0
+			if i+1 < len(s) && s[i+1] == '\n' {
+				i++
+			}
+		default:
+			current++
+		}
+	}
+	if current > longest {
+		longest = current
+	}
+	return longest
+}
+
+// encodeQuotedPrintable renders body in quoted-printable form. Lines are at
+// most 76 bytes, so the result always satisfies the RFC 5322 line-length limit,
+// and decoding restores the original body bytes.
+func encodeQuotedPrintable(body string) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := quotedprintable.NewWriter(&buf)
+	if _, err := io.WriteString(writer, normalizeCRLF(body)); err != nil {
+		return nil, fmt.Errorf("mail: encode quoted-printable: %w", err)
+	}
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("mail: encode quoted-printable: %w", err)
+	}
+	return buf.Bytes(), nil
 }
 
 // containsNonASCII reports whether s contains a non-ASCII byte.

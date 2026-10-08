@@ -90,6 +90,9 @@ msg := mail.NewMessage().
 ```
 
 - Setting both `Text` and `HTML` produces a `multipart/alternative` body.
+- A body containing a line longer than 998 bytes is automatically encoded as
+  `quoted-printable`, so the submission server's RFC 5322 line-length check
+  cannot reject it; decoding restores the original body bytes.
 - `AttachFile` adds a file with an `application/octet-stream` content type;
   use `Attach` to set a content type, or `AttachInline` for `cid:` references.
 - `Bcc` adds envelope recipients without a visible `Bcc` header.
@@ -229,6 +232,9 @@ The submission service enforces these limits; exceeding them returns an SMTP
 error or truncates the transaction:
 
 - 25 MB maximum message size (advertised as `SIZE 26214400`).
+- 998-byte maximum line length (RFC 5322). `Message` bodies over the limit are
+  automatically quoted-printable encoded; `SendRaw` callers are responsible for
+  their own line lengths.
 - 100 envelope recipients per transaction, counting `Bcc` and recipients added
   by routing rules.
 - Three `Received` headers retained.

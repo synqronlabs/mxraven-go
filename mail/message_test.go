@@ -1,6 +1,11 @@
 package mail
 
 import (
+	"bytes"
+	"io"
+	"mime"
+	"mime/multipart"
+	"mime/quotedprintable"
 	"strings"
 	"testing"
 	"time"
@@ -181,4 +186,202 @@ func TestContainsNonASCII(t *testing.T) {
 	if !containsNonASCII("grüße") {
 		t.Error("containsNonASCII(grüße) = false")
 	}
+}
+
+func TestLongestLine(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want int
+	}{
+		{"empty", "", 0},
+		{"single", "abc", 3},
+		{"lf", "a\nbbb\ncc", 3},
+		{"crlf", "a\r\nbbb\r\ncc", 3},
+		{"bare cr", "a\rbbb\rcc", 3},
+		{"no trailing newline", "aa\nbbbb", 4},
+		{"trailing newline", "aa\nbbbb\n", 4},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := longestLine(tt.in); got != tt.want {
+				t.Errorf("longestLine(%q) = %d, want %d", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNeedsQuotedPrintable(t *testing.T) {
+	if needsQuotedPrintable(strings.Repeat("a", 998)) {
+		t.Error("998-char line should not need quoted-printable encoding")
+	}
+	if !needsQuotedPrintable(strings.Repeat("a", 999)) {
+		t.Error("999-char line should need quoted-printable encoding")
+	}
+	if needsQuotedPrintable("short\r\nlines\r\n") {
+		t.Error("short lines should not need quoted-printable encoding")
+	}
+}
+
+func TestMessageBuildQuotedPrintableTextBody(t *testing.T) {
+	long := "line one\r\n" + strings.Repeat("a", 1200) + "\r\nline three"
+
+	built, err := NewMessage().
+		From("a@example.com").
+		To("b@example.com").
+		Text(long).
+		build()
+	if err != nil {
+		t.Fatalf("build() error = %v", err)
+	}
+
+	if got := built.Content.Headers.Get("Content-Transfer-Encoding"); got != "quoted-printable" {
+		t.Fatalf("Content-Transfer-Encoding = %q, want quoted-printable", got)
+	}
+	assertQuotedPrintableLines(t, built.Content.Body)
+	if err := built.Content.Validate(); err != nil {
+		t.Errorf("Content.Validate() error = %v, want nil", err)
+	}
+	if got := decodeQuotedPrintable(t, built.Content.Body); got != normalizeCRLF(long) {
+		t.Errorf("decoded body = %q, want %q", got, normalizeCRLF(long))
+	}
+}
+
+func TestMessageBuildQuotedPrintableHTMLBody(t *testing.T) {
+	long := "<p>" + strings.Repeat("x", 1500) + "</p>"
+
+	built, err := NewMessage().
+		From("a@example.com").
+		To("b@example.com").
+		HTML(long).
+		build()
+	if err != nil {
+		t.Fatalf("build() error = %v", err)
+	}
+
+	if got := built.Content.Headers.Get("Content-Type"); got != "text/html; charset=utf-8" {
+		t.Errorf("Content-Type = %q, want text/html; charset=utf-8", got)
+	}
+	if got := built.Content.Headers.Get("Content-Transfer-Encoding"); got != "quoted-printable" {
+		t.Fatalf("Content-Transfer-Encoding = %q, want quoted-printable", got)
+	}
+	assertQuotedPrintableLines(t, built.Content.Body)
+	if err := built.Content.Validate(); err != nil {
+		t.Errorf("Content.Validate() error = %v, want nil", err)
+	}
+	if got := decodeQuotedPrintable(t, built.Content.Body); got != long {
+		t.Errorf("decoded body = %q, want %q", got, long)
+	}
+}
+
+func TestMessageBuildQuotedPrintableNonASCII(t *testing.T) {
+	long := strings.Repeat("ü", 1200)
+
+	built, err := NewMessage().
+		From("a@example.com").
+		To("b@example.com").
+		Text(long).
+		build()
+	if err != nil {
+		t.Fatalf("build() error = %v", err)
+	}
+
+	if got := built.Content.Headers.Get("Content-Transfer-Encoding"); got != "quoted-printable" {
+		t.Fatalf("Content-Transfer-Encoding = %q, want quoted-printable", got)
+	}
+	if err := built.Content.Validate(); err != nil {
+		t.Errorf("Content.Validate() error = %v, want nil", err)
+	}
+	if got := decodeQuotedPrintable(t, built.Content.Body); got != long {
+		t.Errorf("decoded body = %q, want %q", got, long)
+	}
+}
+
+func TestMessageBuildQuotedPrintableAlternative(t *testing.T) {
+	longText := strings.Repeat("t", 1100)
+	longHTML := "<p>" + strings.Repeat("h", 1100) + "</p>"
+
+	built, err := NewMessage().
+		From("a@example.com").
+		To("b@example.com").
+		Text(longText).
+		HTML(longHTML).
+		build()
+	if err != nil {
+		t.Fatalf("build() error = %v", err)
+	}
+
+	mediaType, params, err := mime.ParseMediaType(built.Content.Headers.Get("Content-Type"))
+	if err != nil {
+		t.Fatalf("parse Content-Type: %v", err)
+	}
+	if mediaType != "multipart/alternative" {
+		t.Fatalf("media type = %q, want multipart/alternative", mediaType)
+	}
+
+	reader := multipart.NewReader(bytes.NewReader(built.Content.Body), params["boundary"])
+	want := []struct {
+		contentType string
+		body        string
+	}{
+		{"text/plain; charset=utf-8", longText},
+		{"text/html; charset=utf-8", longHTML},
+	}
+	for i, w := range want {
+		part, err := reader.NextRawPart()
+		if err != nil {
+			t.Fatalf("part %d: NextRawPart() error = %v", i, err)
+		}
+		if got := part.Header.Get("Content-Type"); got != w.contentType {
+			t.Errorf("part %d Content-Type = %q, want %q", i, got, w.contentType)
+		}
+		if got := part.Header.Get("Content-Transfer-Encoding"); got != "quoted-printable" {
+			t.Errorf("part %d Content-Transfer-Encoding = %q, want quoted-printable", i, got)
+		}
+		decoded, err := io.ReadAll(quotedprintable.NewReader(part))
+		if err != nil {
+			t.Fatalf("part %d decode: %v", i, err)
+		}
+		if string(decoded) != w.body {
+			t.Errorf("part %d decoded body = %q, want %q", i, decoded, w.body)
+		}
+	}
+	if _, err := reader.NextRawPart(); err != io.EOF {
+		t.Errorf("NextRawPart() after last part error = %v, want io.EOF", err)
+	}
+	if err := built.Content.Validate(); err != nil {
+		t.Errorf("Content.Validate() error = %v, want nil", err)
+	}
+}
+
+func TestMessageBuildKeepsShortBodiesUnencoded(t *testing.T) {
+	built, err := NewMessage().
+		From("a@example.com").
+		To("b@example.com").
+		Text("short body\r\nsecond line").
+		build()
+	if err != nil {
+		t.Fatalf("build() error = %v", err)
+	}
+	if got := built.Content.Headers.Get("Content-Transfer-Encoding"); got != "7bit" {
+		t.Errorf("Content-Transfer-Encoding = %q, want 7bit", got)
+	}
+}
+
+func assertQuotedPrintableLines(t *testing.T, body []byte) {
+	t.Helper()
+	for _, line := range strings.Split(string(body), "\r\n") {
+		if len(line) > 76 {
+			t.Errorf("encoded line length = %d, want <= 76: %q", len(line), line)
+		}
+	}
+}
+
+func decodeQuotedPrintable(t *testing.T, body []byte) string {
+	t.Helper()
+	decoded, err := io.ReadAll(quotedprintable.NewReader(bytes.NewReader(body)))
+	if err != nil {
+		t.Fatalf("decode quoted-printable: %v", err)
+	}
+	return string(decoded)
 }
