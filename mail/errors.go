@@ -43,11 +43,19 @@ func (e *SMTPError) Transient() bool {
 	return e.Code >= 400 && e.Code < 500
 }
 
+// ErrDeliveryByUnsupported reports that the submission server does not
+// advertise the DELIVERBY extension, so a requested delivery deadline (RFC
+// 2852) cannot be honored.
+var ErrDeliveryByUnsupported = errors.New("mail: server does not support DELIVERBY")
+
 // translateSMTPError converts a raven SMTP error into an [SMTPError] so callers
 // do not depend on the raven package. Other errors are returned unchanged.
 func translateSMTPError(err error) error {
 	if err == nil {
 		return nil
+	}
+	if errors.Is(err, ravenclient.ErrDeliveryByNotSupported) {
+		return ErrDeliveryByUnsupported
 	}
 	var smtpErr *ravenclient.SMTPError
 	if errors.As(err, &smtpErr) {

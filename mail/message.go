@@ -35,6 +35,8 @@ type Message struct {
 	inReplyTo   string
 	references  []string
 	date        time.Time
+	deliveryBy  *DeliveryBy
+	requireTLS  bool
 }
 
 // Header is a custom message header.
@@ -146,6 +148,23 @@ func (m *Message) Date(t time.Time) *Message {
 	return m
 }
 
+// DeliveryBy requests delivery within a bounded window using the DELIVERBY
+// extension (RFC 2852). The submission server must advertise DELIVERBY or the
+// send fails with [ErrDeliveryByUnsupported].
+func (m *Message) DeliveryBy(by DeliveryBy) *Message {
+	m.deliveryBy = &by
+	return m
+}
+
+// RequireTLS marks the message as requiring TLS on every delivery hop using the
+// REQUIRETLS extension (RFC 8689). A compliant receiving server refuses to
+// deliver the message over a non-TLS connection, and the submission server must
+// advertise REQUIRETLS or the send is rejected.
+func (m *Message) RequireTLS() *Message {
+	m.requireTLS = true
+	return m
+}
+
 // Text sets the plain-text body. When both [Message.Text] and [Message.HTML]
 // are set, the message is sent as multipart/alternative.
 func (m *Message) Text(body string) *Message {
@@ -252,6 +271,16 @@ func (m *Message) build() (*ravenmail.Mail, error) {
 			continue
 		}
 		builder.AttachFile(attachment.Filename, attachment.Data, attachment.ContentType)
+	}
+	if m.deliveryBy != nil {
+		deliveryBy, err := m.deliveryBy.raven()
+		if err != nil {
+			return nil, err
+		}
+		builder.DeliveryBy(deliveryBy.Seconds, deliveryBy.Mode, deliveryBy.Trace)
+	}
+	if m.requireTLS {
+		builder.RequireTLS()
 	}
 
 	built, err := builder.Build()

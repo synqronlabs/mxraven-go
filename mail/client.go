@@ -188,6 +188,15 @@ type Envelope struct {
 	From string
 	// To holds at least one envelope recipient.
 	To []string
+	// DeliveryBy requests delivery within a bounded window using the DELIVERBY
+	// extension (RFC 2852). When nil, no deadline is requested. The submission
+	// server must advertise DELIVERBY or the send fails with
+	// [ErrDeliveryByUnsupported].
+	DeliveryBy *DeliveryBy
+	// RequireTLS marks the message as requiring TLS on every delivery hop using
+	// the REQUIRETLS extension (RFC 8689). The submission server must advertise
+	// REQUIRETLS or the send is rejected.
+	RequireTLS bool
 }
 
 // SendRaw streams a raw RFC 5322 message with an explicit envelope.
@@ -259,6 +268,14 @@ func (e Envelope) raven() (ravenmail.Envelope, error) {
 		envelope.To = append(envelope.To, ravenmail.Recipient{
 			Address: ravenmail.Path{Mailbox: address},
 		})
+	}
+	envelope.RequireTLS = e.RequireTLS
+	if e.DeliveryBy != nil {
+		deliveryBy, err := e.DeliveryBy.raven()
+		if err != nil {
+			return envelope, err
+		}
+		envelope.DeliveryBy = deliveryBy
 	}
 	return envelope, nil
 }

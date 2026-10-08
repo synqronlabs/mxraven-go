@@ -112,6 +112,53 @@ result, err := client.SendRaw(ctx,
 )
 ```
 
+## Delivery deadlines
+
+`DeliveryBy` requests delivery within a bounded window using the SMTP
+`DELIVERBY` extension (RFC 2852). The window is relative to the time the server
+accepts the message and is truncated to whole seconds.
+
+```go
+msg := mail.NewMessage().
+	From("Acme <noreply@acme.example>").
+	To("customer@example.com").
+	Subject("Time-sensitive").
+	Text("Please deliver promptly.").
+	DeliveryBy(mail.DeliveryBy{
+		Within: 2 * time.Hour,
+		Mode:   mail.DeliveryReturn,
+	})
+```
+
+`DeliveryNotify` (the default) asks the server to report a delay when the
+deadline passes; `DeliveryReturn` asks it to return the message instead, and
+requires a deadline of at least one second. Set `Trace` to request that the
+delivery-by time be recorded in trace information. `DeliveryBy` is also
+available on `Envelope` for `SendRaw`.
+
+The submission server must advertise `DELIVERBY`, otherwise the send fails with
+`mail.ErrDeliveryByUnsupported`.
+
+## Requiring TLS
+
+`RequireTLS` marks a message as requiring TLS on every delivery hop using the
+`REQUIRETLS` extension (RFC 8689). A compliant receiving server refuses to
+deliver the message over a non-TLS connection, which lets a sender report
+delivery problems without transmitting message content in the clear.
+
+```go
+msg := mail.NewMessage().
+	From("Acme <noreply@acme.example>").
+	To("customer@example.com").
+	Subject("Confidential").
+	Text("Please protect this message in transit.").
+	RequireTLS()
+```
+
+`RequireTLS` is also available on `Envelope` for `SendRaw`. The submission
+server must advertise `REQUIRETLS` and the session must use STARTTLS (which the
+client always requires), otherwise the send is rejected.
+
 ## Results
 
 `Send` returns a `*Result`:
