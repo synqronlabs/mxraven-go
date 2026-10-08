@@ -1133,11 +1133,15 @@ type CreateAutoReplyTemplateRequest struct {
 	TemplateRef string `json:"template_ref"`
 	DisplayName string `json:"display_name"`
 	// RFC 5322 mailbox, optionally including a display name.
-	FromAddress string                    `json:"from_address"`
-	Subject     string                    `json:"subject"`
-	TextBody    OptNilString              `json:"text_body"`
-	HTMLBody    OptNilString              `json:"html_body"`
-	Headers     []AutoReplyTemplateHeader `json:"headers"`
+	FromAddress string       `json:"from_address"`
+	Subject     string       `json:"subject"`
+	TextBody    OptNilString `json:"text_body"`
+	// HTML reply body. Normalised on create by an authoring-time content policy that removes script,
+	// style, form, iframe, object, and embed elements, event-handler attributes, non-HTTP URL schemes, and
+	// inline CSS properties outside the allowlist. Rejected with validation_failed when the policy would
+	// alter a template action.
+	HTMLBody OptNilString              `json:"html_body"`
+	Headers  []AutoReplyTemplateHeader `json:"headers"`
 }
 
 // GetTemplateRef returns the value of TemplateRef.
@@ -2671,17 +2675,18 @@ func (s *CreateTenantLDAPIdentityProviderRequest) SetProviderOptions(val OptProv
 
 // Ref: #/CreateTenantOAuthIdentityProviderRequest
 type CreateTenantOAuthIdentityProviderRequest struct {
-	IdpRef                string             `json:"idp_ref"`
-	Name                  string             `json:"name"`
-	ClientID              string             `json:"client_id"`
-	ClientSecret          string             `json:"client_secret"`
-	AuthorizationEndpoint string             `json:"authorization_endpoint"`
-	TokenEndpoint         string             `json:"token_endpoint"`
-	UserEndpoint          string             `json:"user_endpoint"`
-	Scopes                []string           `json:"scopes"`
-	IDAttribute           OptString          `json:"id_attribute"`
-	UsePkce               OptBool            `json:"use_pkce"`
-	ProviderOptions       OptProviderOptions `json:"provider_options"`
+	IdpRef                string   `json:"idp_ref"`
+	Name                  string   `json:"name"`
+	ClientID              string   `json:"client_id"`
+	ClientSecret          string   `json:"client_secret"`
+	AuthorizationEndpoint string   `json:"authorization_endpoint"`
+	TokenEndpoint         string   `json:"token_endpoint"`
+	UserEndpoint          string   `json:"user_endpoint"`
+	Scopes                []string `json:"scopes"`
+	// Identifying attribute of the user in the response of the user endpoint. Required by ZITADEL.
+	IDAttribute     string             `json:"id_attribute"`
+	UsePkce         OptBool            `json:"use_pkce"`
+	ProviderOptions OptProviderOptions `json:"provider_options"`
 }
 
 // GetIdpRef returns the value of IdpRef.
@@ -2725,7 +2730,7 @@ func (s *CreateTenantOAuthIdentityProviderRequest) GetScopes() []string {
 }
 
 // GetIDAttribute returns the value of IDAttribute.
-func (s *CreateTenantOAuthIdentityProviderRequest) GetIDAttribute() OptString {
+func (s *CreateTenantOAuthIdentityProviderRequest) GetIDAttribute() string {
 	return s.IDAttribute
 }
 
@@ -2780,7 +2785,7 @@ func (s *CreateTenantOAuthIdentityProviderRequest) SetScopes(val []string) {
 }
 
 // SetIDAttribute sets the value of IDAttribute.
-func (s *CreateTenantOAuthIdentityProviderRequest) SetIDAttribute(val OptString) {
+func (s *CreateTenantOAuthIdentityProviderRequest) SetIDAttribute(val string) {
 	s.IDAttribute = val
 }
 
@@ -19091,11 +19096,15 @@ func (*UnsupportedMediaTypeHeaders) updateWebhookEndpointRes()                  
 type UpdateAutoReplyTemplateRequest struct {
 	DisplayName string `json:"display_name"`
 	// RFC 5322 mailbox, optionally including a display name.
-	FromAddress string                    `json:"from_address"`
-	Subject     string                    `json:"subject"`
-	TextBody    NilString                 `json:"text_body"`
-	HTMLBody    NilString                 `json:"html_body"`
-	Headers     []AutoReplyTemplateHeader `json:"headers"`
+	FromAddress string    `json:"from_address"`
+	Subject     string    `json:"subject"`
+	TextBody    NilString `json:"text_body"`
+	// HTML reply body. Normalised on update by an authoring-time content policy that removes script,
+	// style, form, iframe, object, and embed elements, event-handler attributes, non-HTTP URL schemes, and
+	// inline CSS properties outside the allowlist. Rejected with validation_failed when the policy would
+	// alter a template action.
+	HTMLBody NilString                 `json:"html_body"`
+	Headers  []AutoReplyTemplateHeader `json:"headers"`
 }
 
 // GetDisplayName returns the value of DisplayName.

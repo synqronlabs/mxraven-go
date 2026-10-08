@@ -5595,10 +5595,8 @@ func (s *CreateTenantOAuthIdentityProviderRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.IDAttribute.Set {
-			e.FieldStart("id_attribute")
-			s.IDAttribute.Encode(e)
-		}
+		e.FieldStart("id_attribute")
+		e.Str(s.IDAttribute)
 	}
 	{
 		if s.UsePkce.Set {
@@ -5741,9 +5739,11 @@ func (s *CreateTenantOAuthIdentityProviderRequest) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"scopes\"")
 			}
 		case "id_attribute":
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
-				s.IDAttribute.Reset()
-				if err := s.IDAttribute.Decode(d); err != nil {
+				v, err := d.Str()
+				s.IDAttribute = string(v)
+				if err != nil {
 					return err
 				}
 				return nil
@@ -5781,7 +5781,7 @@ func (s *CreateTenantOAuthIdentityProviderRequest) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b01111111,
-		0b00000000,
+		0b00000001,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
