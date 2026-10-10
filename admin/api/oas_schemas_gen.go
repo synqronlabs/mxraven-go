@@ -4133,14 +4133,14 @@ type DomainListenerGrantStreamType string
 
 const (
 	DomainListenerGrantStreamTypeTransactional DomainListenerGrantStreamType = "transactional"
-	DomainListenerGrantStreamTypeBroadcast     DomainListenerGrantStreamType = "broadcast"
+	DomainListenerGrantStreamTypeMarketing     DomainListenerGrantStreamType = "marketing"
 )
 
 // AllValues returns all DomainListenerGrantStreamType values.
 func (DomainListenerGrantStreamType) AllValues() []DomainListenerGrantStreamType {
 	return []DomainListenerGrantStreamType{
 		DomainListenerGrantStreamTypeTransactional,
-		DomainListenerGrantStreamTypeBroadcast,
+		DomainListenerGrantStreamTypeMarketing,
 	}
 }
 
@@ -4149,7 +4149,7 @@ func (s DomainListenerGrantStreamType) MarshalText() ([]byte, error) {
 	switch s {
 	case DomainListenerGrantStreamTypeTransactional:
 		return []byte(s), nil
-	case DomainListenerGrantStreamTypeBroadcast:
+	case DomainListenerGrantStreamTypeMarketing:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -4162,8 +4162,8 @@ func (s *DomainListenerGrantStreamType) UnmarshalText(data []byte) error {
 	case DomainListenerGrantStreamTypeTransactional:
 		*s = DomainListenerGrantStreamTypeTransactional
 		return nil
-	case DomainListenerGrantStreamTypeBroadcast:
-		*s = DomainListenerGrantStreamTypeBroadcast
+	case DomainListenerGrantStreamTypeMarketing:
+		*s = DomainListenerGrantStreamTypeMarketing
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

@@ -5956,7 +5956,7 @@ func (s DomainListenerGrantStreamType) Validate() error {
 	switch s {
 	case "transactional":
 		return nil
-	case "broadcast":
+	case "marketing":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

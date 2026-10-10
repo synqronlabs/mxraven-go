@@ -7898,8 +7898,8 @@ func (s *DomainListenerGrantStreamType) Decode(d *jx.Decoder) error {
 	switch DomainListenerGrantStreamType(v) {
 	case DomainListenerGrantStreamTypeTransactional:
 		*s = DomainListenerGrantStreamTypeTransactional
-	case DomainListenerGrantStreamTypeBroadcast:
-		*s = DomainListenerGrantStreamTypeBroadcast
+	case DomainListenerGrantStreamTypeMarketing:
+		*s = DomainListenerGrantStreamTypeMarketing
 	default:
 		*s = DomainListenerGrantStreamType(v)
 	}
