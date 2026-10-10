@@ -3845,7 +3845,6 @@ type Domain struct {
 	DNSLastCheckedAt        NilDateTime            `json:"dns_last_checked_at"`
 	Status                  DomainStatus           `json:"status"`
 	RequiredCustomerRecords []DNSInstructionRecord `json:"required_customer_records"`
-	PlatformRecords         []DNSInstructionRecord `json:"platform_records"`
 }
 
 // GetID returns the value of ID.
@@ -3913,11 +3912,6 @@ func (s *Domain) GetRequiredCustomerRecords() []DNSInstructionRecord {
 	return s.RequiredCustomerRecords
 }
 
-// GetPlatformRecords returns the value of PlatformRecords.
-func (s *Domain) GetPlatformRecords() []DNSInstructionRecord {
-	return s.PlatformRecords
-}
-
 // SetID sets the value of ID.
 func (s *Domain) SetID(val uuid.UUID) {
 	s.ID = val
@@ -3981,11 +3975,6 @@ func (s *Domain) SetStatus(val DomainStatus) {
 // SetRequiredCustomerRecords sets the value of RequiredCustomerRecords.
 func (s *Domain) SetRequiredCustomerRecords(val []DNSInstructionRecord) {
 	s.RequiredCustomerRecords = val
-}
-
-// SetPlatformRecords sets the value of PlatformRecords.
-func (s *Domain) SetPlatformRecords(val []DNSInstructionRecord) {
-	s.PlatformRecords = val
 }
 
 // DomainHeaders wraps Domain with response headers.

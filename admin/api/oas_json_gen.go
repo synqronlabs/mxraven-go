@@ -7402,19 +7402,9 @@ func (s *Domain) encodeFields(e *jx.Encoder) {
 			e.ArrEnd()
 		}
 	}
-	{
-		if s.PlatformRecords != nil {
-			e.FieldStart("platform_records")
-			e.ArrStart()
-			for _, elem := range s.PlatformRecords {
-				elem.Encode(e)
-			}
-			e.ArrEnd()
-		}
-	}
 }
 
-var jsonFieldsNameOfDomain = [14]string{
+var jsonFieldsNameOfDomain = [13]string{
 	0:  "id",
 	1:  "tenant_id",
 	2:  "domain_name",
@@ -7428,7 +7418,6 @@ var jsonFieldsNameOfDomain = [14]string{
 	10: "dns_last_checked_at",
 	11: "status",
 	12: "required_customer_records",
-	13: "platform_records",
 }
 
 // Decode decodes Domain from json.
@@ -7594,23 +7583,6 @@ func (s *Domain) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"required_customer_records\"")
-			}
-		case "platform_records":
-			if err := func() error {
-				s.PlatformRecords = make([]DNSInstructionRecord, 0)
-				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem DNSInstructionRecord
-					if err := elem.Decode(d); err != nil {
-						return err
-					}
-					s.PlatformRecords = append(s.PlatformRecords, elem)
-					return nil
-				}); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"platform_records\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
