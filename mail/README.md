@@ -175,6 +175,42 @@ client always requires), otherwise the send is rejected.
 
 `MessageRef` is the durable reference to use for correlation and analytics.
 
+## Retrying and de-duplication
+
+mxRaven de-duplicates submissions **best effort** within its JetStream duplicate
+window, keyed on the message's `Message-ID` and scoped by tenant, listener, and
+recipient. It is not an exactly-once guarantee, and the SDK does not retry
+automatically.
+
+Set a stable `Message-ID` before the first attempt and reuse it on every retry.
+Without an explicit Message-ID, the builder generates a fresh one for each
+`Send`, so a retry is treated as a new message:
+
+```go
+msg := mail.NewMessage().
+	From("Acme <noreply@acme.example>").
+	To("customer@example.com").
+	Subject("Your receipt").
+	Text("Thanks for your order.").
+	MessageID(orderID + "@acme.example") // stable across retries
+
+for attempt := 1; attempt <= 3; attempt++ {
+	result, err = client.Send(ctx, msg)
+	if err == nil {
+		break
+	}
+	var smtpErr *mail.SMTPError
+	if errors.As(err, &smtpErr) && smtpErr.Permanent() {
+		return err // retrying the same message will not help
+	}
+	time.Sleep(backoff(attempt))
+}
+```
+
+Retries with the same Message-ID also return the same `Result.MessageRef`. For
+`SendRaw`, put the stable Message-ID in the raw RFC 5322 bytes yourself; the SDK
+does not rewrite a raw message.
+
 ## Errors
 
 Rejected commands are returned as `*mail.SMTPError`:

@@ -163,6 +163,11 @@ func WithLocalName(name string) Option {
 // A non-nil [*Result] is returned alongside the error when the server replied
 // but rejected the transaction, because per-recipient detail remains useful.
 // On success the error is nil.
+//
+// Send does not retry. mxRaven de-duplicates submissions best effort using the
+// message's Message-ID, so a caller that retries a submission should set a
+// stable [Message.MessageID] before the first attempt and reuse it on every
+// retry. See the package documentation for the retry contract.
 func (c *Client) Send(ctx context.Context, msg *Message) (*Result, error) {
 	if c == nil || c.pool == nil {
 		return nil, errors.New("mail: client is not initialized")
@@ -203,6 +208,10 @@ type Envelope struct {
 //
 // The message is not parsed, so the caller is responsible for RFC 5322
 // correctness. This is the efficient path for large or pre-rendered messages.
+//
+// SendRaw does not retry, and it does not rewrite headers. To have a retry
+// de-duplicated, the raw message must carry a stable Message-ID header that is
+// reused on every attempt; see the package documentation.
 func (c *Client) SendRaw(ctx context.Context, envelope Envelope, data io.Reader) (*Result, error) {
 	if c == nil || c.pool == nil {
 		return nil, errors.New("mail: client is not initialized")

@@ -29,6 +29,13 @@
 // secret. The submission service requires STARTTLS and SMTP AUTH; both are
 // enabled by default.
 //
+// The client does not retry a submission. mxRaven de-duplicates submissions
+// best effort against the message's Message-ID, scoped by tenant, listener, and
+// recipient. To make a retry collapse instead of delivering twice, set a stable
+// [Message.MessageID] before the first attempt and reuse it on every retry.
+// When no Message-ID is set, a fresh one is generated for each [Client.Send],
+// and a retry is treated as a new message.
+//
 // Subpackages cover the remaining runtime surfaces:
 //
 //   - github.com/synqronlabs/mxraven-go/mail/webhook verifies and decodes

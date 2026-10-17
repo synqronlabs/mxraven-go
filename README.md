@@ -220,7 +220,7 @@ fmt.Println("accepted as", result.MessageRef)
 ```
 
 See the [`mail` README](./mail/README.md) for message composition, raw sending,
-limits, and options.
+retry de-duplication, limits, and options.
 
 ## Webhooks (`mail/webhook`)
 

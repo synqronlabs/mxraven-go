@@ -126,6 +126,13 @@ func (m *Message) Subject(subject string) *Message {
 
 // MessageID sets the Message-ID header. The value is wrapped in angle brackets
 // when it is not already.
+//
+// Set it explicitly when a send may be retried. mxRaven de-duplicates
+// submissions best effort against the message's Message-ID, so retries that
+// reuse the same value can be collapsed within the de-duplication window, while
+// a retry carrying a different Message-ID is a new message. When it is not set,
+// a fresh Message-ID is generated for every [Client.Send], so a retry is not
+// de-duplicated.
 func (m *Message) MessageID(id string) *Message {
 	m.messageID = id
 	return m

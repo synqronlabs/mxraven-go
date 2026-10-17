@@ -10,7 +10,8 @@ import (
 type Result struct {
 	// MessageRef is the mxRaven message reference assigned to the submission,
 	// as returned in the server's final "message_ref=<uuid>" reply. It is
-	// empty when the server did not report one.
+	// empty when the server did not report one. It is stable across retries
+	// that reuse the same Message-ID.
 	MessageRef string
 	// Code and Message are the final SMTP reply. Message is intended for
 	// humans and is not stable.
