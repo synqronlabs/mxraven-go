@@ -35,6 +35,8 @@
 //     DELIVER_WEBHOOK and NOTIFY_WEBHOOK deliveries.
 //   - github.com/synqronlabs/mxraven-go/mail/feedback submits recipient
 //     feedback to the mxRaven feedback service.
+//   - github.com/synqronlabs/mxraven-go/mail/notify consumes client
+//     notification events over NATS.
 //
 // Control-plane administration, including suppression lists, deliverability
 // reporting, and mail analytics, lives in

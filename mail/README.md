@@ -1,7 +1,8 @@
 # mxRaven Mail SDK
 
 A Go SDK for the mxRaven mail-facing runtime surfaces: SMTP submission,
-webhook verification and decoding, and recipient feedback.
+webhook verification and decoding, recipient feedback, and client notification
+consumption.
 
 The library wraps the open-source
 [`github.com/synqronlabs/raven`](https://github.com/synqronlabs/raven) SMTP
@@ -225,6 +226,8 @@ Always call `Close` to release pooled connections.
   an inbound-email payload.
 - [`mail/feedback`](./feedback/README.md) submits tenant spam/ham training and
   performs RFC 8058 one-click unsubscribes.
+- [`mail/notify`](./notify/README.md) consumes the listener's client
+  notification stream over NATS, using the same submission API key.
 
 ## Server limits
 

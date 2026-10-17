@@ -5,8 +5,8 @@ covers both sides of an integration:
 
 - **Control plane:** manage tenants, listeners, domains, routing rules,
   webhook endpoints, suppressions, and analytics.
-- **Mail runtime:** submit mail over SMTP, receive and verify webhooks, and
-  send recipient feedback.
+- **Mail runtime:** submit mail over SMTP, receive and verify webhooks, send
+  recipient feedback, and consume client notification events over NATS.
 
 ## Packages
 
@@ -17,6 +17,7 @@ covers both sides of an integration:
 | `mail` | `github.com/synqronlabs/mxraven-go/mail` | SMTP submission. |
 | `mail/webhook` | `github.com/synqronlabs/mxraven-go/mail/webhook` | Webhook verification and decoding. |
 | `mail/feedback` | `github.com/synqronlabs/mxraven-go/mail/feedback` | Spam/ham learning and one-click unsubscribe. |
+| `mail/notify` | `github.com/synqronlabs/mxraven-go/mail/notify` | Client notification stream over NATS. |
 
 ## Requirements
 
@@ -310,6 +311,54 @@ Suppression lists, deliverability reporting, and mail analytics remain in the
 See the [`feedback` README](./mail/feedback/README.md) for limits and error
 codes.
 
+## Client notifications (`mail/notify`)
+
+`mail/notify` consumes the durable mail events a listener publishes when client
+notifications are enabled. Events are read from the listener's own JetStream
+consumer over a NATS WebSocket connection, authenticated with the same
+submission API key.
+
+```go
+import (
+	"context"
+	"log"
+
+	"github.com/synqronlabs/mxraven-go/mail/notify"
+)
+
+client, err := notify.New(
+	notify.WithURL("wss://nats.mxraven.com"),
+	notify.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
+	notify.WithListener(listenerID),
+)
+if err != nil {
+	log.Fatal(err)
+}
+defer client.Close()
+
+err = client.Consume(context.Background(), func(ctx context.Context, event notify.Event) error {
+	switch {
+	case event.Accepted != nil:
+		log.Printf("accepted %s", event.Accepted.TaskID)
+	case event.Attempt != nil:
+		log.Printf("attempt %s: %s", event.Attempt.TaskID, event.Attempt.Status)
+	}
+	return nil
+})
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+An accepted event reuses the webhook payload model, including raw-message access
+for MTA listeners. `Consume` acknowledges an event when its handler returns nil
+and retries it with backoff when the handler returns an error;
+`Client.Events` is an iterator for callers that acknowledge explicitly.
+
+Notifications are off by default and are enabled per listener with the `admin`
+SDK. See the [`notify` README](./mail/notify/README.md) for the event model,
+retention, and options.
+
 ## Repository layout
 
 ```text
@@ -319,6 +368,7 @@ admin/                Control-plane SDK
 mail/                 SMTP submission SDK
   webhook/            Webhook verification and decoding
   feedback/           Spam/ham learning and one-click unsubscribe
+  notify/             Client notification stream over NATS
 tools/openapifilter/  Derives the tenant-only OpenAPI contract for generation
 ```
 
