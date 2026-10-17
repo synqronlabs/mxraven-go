@@ -846,6 +846,7 @@ func (*BadRequestHeaders) getMailAnalyticsBreakdownRes()                        
 func (*BadRequestHeaders) getMailAnalyticsComparisonRes()                         {}
 func (*BadRequestHeaders) getMailAnalyticsDomainLifecycleRes()                    {}
 func (*BadRequestHeaders) getMailAnalyticsLifecycleRes()                          {}
+func (*BadRequestHeaders) getMailAnalyticsListenerOverviewRes()                   {}
 func (*BadRequestHeaders) getMailAnalyticsOverviewRes()                           {}
 func (*BadRequestHeaders) getMailAnalyticsSeriesRes()                             {}
 func (*BadRequestHeaders) getMailAnalyticsTaskSizeStatisticsRes()                 {}
@@ -904,6 +905,7 @@ func (*BadRequestHeaders) setWebhookEndpointActiveRes()                         
 func (*BadRequestHeaders) updateAutoReplyTemplateRes()                            {}
 func (*BadRequestHeaders) updateInboundRouteRes()                                 {}
 func (*BadRequestHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*BadRequestHeaders) updateListenerNotificationsRes()                        {}
 func (*BadRequestHeaders) updateListenerRes()                                     {}
 func (*BadRequestHeaders) updateListenerRspamdScanningRes()                       {}
 func (*BadRequestHeaders) updateRecipientSetRes()                                 {}
@@ -1077,6 +1079,7 @@ func (*ContentTooLargeHeaders) setWebhookEndpointActiveRes()                    
 func (*ContentTooLargeHeaders) updateAutoReplyTemplateRes()                            {}
 func (*ContentTooLargeHeaders) updateInboundRouteRes()                                 {}
 func (*ContentTooLargeHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*ContentTooLargeHeaders) updateListenerNotificationsRes()                        {}
 func (*ContentTooLargeHeaders) updateListenerRes()                                     {}
 func (*ContentTooLargeHeaders) updateListenerRspamdScanningRes()                       {}
 func (*ContentTooLargeHeaders) updateRecipientSetRes()                                 {}
@@ -4959,12 +4962,14 @@ func (*ForbiddenHeaders) getAutoReplyTemplateRes()                              
 func (*ForbiddenHeaders) getDomainRes()                                          {}
 func (*ForbiddenHeaders) getInboundRouteRes()                                    {}
 func (*ForbiddenHeaders) getListenerMTARateLimitOverrideRes()                    {}
+func (*ForbiddenHeaders) getListenerNotificationsRes()                           {}
 func (*ForbiddenHeaders) getListenerRes()                                        {}
 func (*ForbiddenHeaders) getMailAnalyticsActivityHeatmapRes()                    {}
 func (*ForbiddenHeaders) getMailAnalyticsBreakdownRes()                          {}
 func (*ForbiddenHeaders) getMailAnalyticsComparisonRes()                         {}
 func (*ForbiddenHeaders) getMailAnalyticsDomainLifecycleRes()                    {}
 func (*ForbiddenHeaders) getMailAnalyticsLifecycleRes()                          {}
+func (*ForbiddenHeaders) getMailAnalyticsListenerOverviewRes()                   {}
 func (*ForbiddenHeaders) getMailAnalyticsOverviewRes()                           {}
 func (*ForbiddenHeaders) getMailAnalyticsSeriesRes()                             {}
 func (*ForbiddenHeaders) getMailAnalyticsTaskSizeStatisticsRes()                 {}
@@ -5025,6 +5030,7 @@ func (*ForbiddenHeaders) setWebhookEndpointActiveRes()                          
 func (*ForbiddenHeaders) updateAutoReplyTemplateRes()                            {}
 func (*ForbiddenHeaders) updateInboundRouteRes()                                 {}
 func (*ForbiddenHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*ForbiddenHeaders) updateListenerNotificationsRes()                        {}
 func (*ForbiddenHeaders) updateListenerRes()                                     {}
 func (*ForbiddenHeaders) updateListenerRspamdScanningRes()                       {}
 func (*ForbiddenHeaders) updateRecipientSetRes()                                 {}
@@ -5962,12 +5968,14 @@ func (*InternalServerErrorHeaders) getAutoReplyTemplateRes()                    
 func (*InternalServerErrorHeaders) getDomainRes()                                          {}
 func (*InternalServerErrorHeaders) getInboundRouteRes()                                    {}
 func (*InternalServerErrorHeaders) getListenerMTARateLimitOverrideRes()                    {}
+func (*InternalServerErrorHeaders) getListenerNotificationsRes()                           {}
 func (*InternalServerErrorHeaders) getListenerRes()                                        {}
 func (*InternalServerErrorHeaders) getMailAnalyticsActivityHeatmapRes()                    {}
 func (*InternalServerErrorHeaders) getMailAnalyticsBreakdownRes()                          {}
 func (*InternalServerErrorHeaders) getMailAnalyticsComparisonRes()                         {}
 func (*InternalServerErrorHeaders) getMailAnalyticsDomainLifecycleRes()                    {}
 func (*InternalServerErrorHeaders) getMailAnalyticsLifecycleRes()                          {}
+func (*InternalServerErrorHeaders) getMailAnalyticsListenerOverviewRes()                   {}
 func (*InternalServerErrorHeaders) getMailAnalyticsOverviewRes()                           {}
 func (*InternalServerErrorHeaders) getMailAnalyticsSeriesRes()                             {}
 func (*InternalServerErrorHeaders) getMailAnalyticsTaskSizeStatisticsRes()                 {}
@@ -6028,6 +6036,7 @@ func (*InternalServerErrorHeaders) setWebhookEndpointActiveRes()                
 func (*InternalServerErrorHeaders) updateAutoReplyTemplateRes()                            {}
 func (*InternalServerErrorHeaders) updateInboundRouteRes()                                 {}
 func (*InternalServerErrorHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*InternalServerErrorHeaders) updateListenerNotificationsRes()                        {}
 func (*InternalServerErrorHeaders) updateListenerRes()                                     {}
 func (*InternalServerErrorHeaders) updateListenerRspamdScanningRes()                       {}
 func (*InternalServerErrorHeaders) updateRecipientSetRes()                                 {}
@@ -7689,6 +7698,74 @@ func (s *ListenerHeaders) SetResponse(val Listener) {
 }
 
 func (*ListenerHeaders) createListenerRes() {}
+
+// Ref: #/ListenerNotificationSetting
+type ListenerNotificationSetting struct {
+	Enabled bool `json:"enabled"`
+	// Subject prefix client notifications are published on for this listener.
+	Subject string `json:"subject"`
+	// Durable pull consumer a client binds to in order to read those events.
+	Consumer string `json:"consumer"`
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *ListenerNotificationSetting) GetEnabled() bool {
+	return s.Enabled
+}
+
+// GetSubject returns the value of Subject.
+func (s *ListenerNotificationSetting) GetSubject() string {
+	return s.Subject
+}
+
+// GetConsumer returns the value of Consumer.
+func (s *ListenerNotificationSetting) GetConsumer() string {
+	return s.Consumer
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *ListenerNotificationSetting) SetEnabled(val bool) {
+	s.Enabled = val
+}
+
+// SetSubject sets the value of Subject.
+func (s *ListenerNotificationSetting) SetSubject(val string) {
+	s.Subject = val
+}
+
+// SetConsumer sets the value of Consumer.
+func (s *ListenerNotificationSetting) SetConsumer(val string) {
+	s.Consumer = val
+}
+
+// ListenerNotificationSettingHeaders wraps ListenerNotificationSetting with response headers.
+type ListenerNotificationSettingHeaders struct {
+	XTraceID OptString
+	Response ListenerNotificationSetting
+}
+
+// GetXTraceID returns the value of XTraceID.
+func (s *ListenerNotificationSettingHeaders) GetXTraceID() OptString {
+	return s.XTraceID
+}
+
+// GetResponse returns the value of Response.
+func (s *ListenerNotificationSettingHeaders) GetResponse() ListenerNotificationSetting {
+	return s.Response
+}
+
+// SetXTraceID sets the value of XTraceID.
+func (s *ListenerNotificationSettingHeaders) SetXTraceID(val OptString) {
+	s.XTraceID = val
+}
+
+// SetResponse sets the value of Response.
+func (s *ListenerNotificationSettingHeaders) SetResponse(val ListenerNotificationSetting) {
+	s.Response = val
+}
+
+func (*ListenerNotificationSettingHeaders) getListenerNotificationsRes()    {}
+func (*ListenerNotificationSettingHeaders) updateListenerNotificationsRes() {}
 
 // Highest per-listener usage for a quota that applies inside one listener. This is a high-watermark,
 // not a workspace sum.
@@ -10225,6 +10302,331 @@ func (s *MailAnalyticsListenerBreakdownItemListenerState) UnmarshalText(data []b
 	}
 }
 
+// Ref: #/MailAnalyticsListenerIdentity
+type MailAnalyticsListenerIdentity struct {
+	ListenerID    uuid.UUID                                  `json:"listener_id"`
+	DisplayName   string                                     `json:"display_name"`
+	ListenerState MailAnalyticsListenerIdentityListenerState `json:"listener_state"`
+}
+
+// GetListenerID returns the value of ListenerID.
+func (s *MailAnalyticsListenerIdentity) GetListenerID() uuid.UUID {
+	return s.ListenerID
+}
+
+// GetDisplayName returns the value of DisplayName.
+func (s *MailAnalyticsListenerIdentity) GetDisplayName() string {
+	return s.DisplayName
+}
+
+// GetListenerState returns the value of ListenerState.
+func (s *MailAnalyticsListenerIdentity) GetListenerState() MailAnalyticsListenerIdentityListenerState {
+	return s.ListenerState
+}
+
+// SetListenerID sets the value of ListenerID.
+func (s *MailAnalyticsListenerIdentity) SetListenerID(val uuid.UUID) {
+	s.ListenerID = val
+}
+
+// SetDisplayName sets the value of DisplayName.
+func (s *MailAnalyticsListenerIdentity) SetDisplayName(val string) {
+	s.DisplayName = val
+}
+
+// SetListenerState sets the value of ListenerState.
+func (s *MailAnalyticsListenerIdentity) SetListenerState(val MailAnalyticsListenerIdentityListenerState) {
+	s.ListenerState = val
+}
+
+type MailAnalyticsListenerIdentityListenerState string
+
+const (
+	MailAnalyticsListenerIdentityListenerStateCurrent          MailAnalyticsListenerIdentityListenerState = "current"
+	MailAnalyticsListenerIdentityListenerStateDeletedOrUnknown MailAnalyticsListenerIdentityListenerState = "deleted_or_unknown"
+)
+
+// AllValues returns all MailAnalyticsListenerIdentityListenerState values.
+func (MailAnalyticsListenerIdentityListenerState) AllValues() []MailAnalyticsListenerIdentityListenerState {
+	return []MailAnalyticsListenerIdentityListenerState{
+		MailAnalyticsListenerIdentityListenerStateCurrent,
+		MailAnalyticsListenerIdentityListenerStateDeletedOrUnknown,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MailAnalyticsListenerIdentityListenerState) MarshalText() ([]byte, error) {
+	switch s {
+	case MailAnalyticsListenerIdentityListenerStateCurrent:
+		return []byte(s), nil
+	case MailAnalyticsListenerIdentityListenerStateDeletedOrUnknown:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MailAnalyticsListenerIdentityListenerState) UnmarshalText(data []byte) error {
+	switch MailAnalyticsListenerIdentityListenerState(data) {
+	case MailAnalyticsListenerIdentityListenerStateCurrent:
+		*s = MailAnalyticsListenerIdentityListenerStateCurrent
+		return nil
+	case MailAnalyticsListenerIdentityListenerStateDeletedOrUnknown:
+		*s = MailAnalyticsListenerIdentityListenerStateDeletedOrUnknown
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/MailAnalyticsListenerOverview
+type MailAnalyticsListenerOverview struct {
+	StartAt                   time.Time                                      `json:"start_at"`
+	EndAt                     time.Time                                      `json:"end_at"`
+	BucketGranularity         MailAnalyticsListenerOverviewBucketGranularity `json:"bucket_granularity"`
+	QueriedAt                 time.Time                                      `json:"queried_at"`
+	EventualConsistencyNotice string                                         `json:"eventual_consistency_notice"`
+	Listener                  MailAnalyticsListenerIdentity                  `json:"listener"`
+	Summary                   MailAnalyticsListenerOverviewMetrics           `json:"summary"`
+	TimeSeries                []MailAnalyticsListenerOverviewTimePoint       `json:"time_series"`
+}
+
+// GetStartAt returns the value of StartAt.
+func (s *MailAnalyticsListenerOverview) GetStartAt() time.Time {
+	return s.StartAt
+}
+
+// GetEndAt returns the value of EndAt.
+func (s *MailAnalyticsListenerOverview) GetEndAt() time.Time {
+	return s.EndAt
+}
+
+// GetBucketGranularity returns the value of BucketGranularity.
+func (s *MailAnalyticsListenerOverview) GetBucketGranularity() MailAnalyticsListenerOverviewBucketGranularity {
+	return s.BucketGranularity
+}
+
+// GetQueriedAt returns the value of QueriedAt.
+func (s *MailAnalyticsListenerOverview) GetQueriedAt() time.Time {
+	return s.QueriedAt
+}
+
+// GetEventualConsistencyNotice returns the value of EventualConsistencyNotice.
+func (s *MailAnalyticsListenerOverview) GetEventualConsistencyNotice() string {
+	return s.EventualConsistencyNotice
+}
+
+// GetListener returns the value of Listener.
+func (s *MailAnalyticsListenerOverview) GetListener() MailAnalyticsListenerIdentity {
+	return s.Listener
+}
+
+// GetSummary returns the value of Summary.
+func (s *MailAnalyticsListenerOverview) GetSummary() MailAnalyticsListenerOverviewMetrics {
+	return s.Summary
+}
+
+// GetTimeSeries returns the value of TimeSeries.
+func (s *MailAnalyticsListenerOverview) GetTimeSeries() []MailAnalyticsListenerOverviewTimePoint {
+	return s.TimeSeries
+}
+
+// SetStartAt sets the value of StartAt.
+func (s *MailAnalyticsListenerOverview) SetStartAt(val time.Time) {
+	s.StartAt = val
+}
+
+// SetEndAt sets the value of EndAt.
+func (s *MailAnalyticsListenerOverview) SetEndAt(val time.Time) {
+	s.EndAt = val
+}
+
+// SetBucketGranularity sets the value of BucketGranularity.
+func (s *MailAnalyticsListenerOverview) SetBucketGranularity(val MailAnalyticsListenerOverviewBucketGranularity) {
+	s.BucketGranularity = val
+}
+
+// SetQueriedAt sets the value of QueriedAt.
+func (s *MailAnalyticsListenerOverview) SetQueriedAt(val time.Time) {
+	s.QueriedAt = val
+}
+
+// SetEventualConsistencyNotice sets the value of EventualConsistencyNotice.
+func (s *MailAnalyticsListenerOverview) SetEventualConsistencyNotice(val string) {
+	s.EventualConsistencyNotice = val
+}
+
+// SetListener sets the value of Listener.
+func (s *MailAnalyticsListenerOverview) SetListener(val MailAnalyticsListenerIdentity) {
+	s.Listener = val
+}
+
+// SetSummary sets the value of Summary.
+func (s *MailAnalyticsListenerOverview) SetSummary(val MailAnalyticsListenerOverviewMetrics) {
+	s.Summary = val
+}
+
+// SetTimeSeries sets the value of TimeSeries.
+func (s *MailAnalyticsListenerOverview) SetTimeSeries(val []MailAnalyticsListenerOverviewTimePoint) {
+	s.TimeSeries = val
+}
+
+type MailAnalyticsListenerOverviewBucketGranularity string
+
+const (
+	MailAnalyticsListenerOverviewBucketGranularityHour MailAnalyticsListenerOverviewBucketGranularity = "hour"
+	MailAnalyticsListenerOverviewBucketGranularityDay  MailAnalyticsListenerOverviewBucketGranularity = "day"
+)
+
+// AllValues returns all MailAnalyticsListenerOverviewBucketGranularity values.
+func (MailAnalyticsListenerOverviewBucketGranularity) AllValues() []MailAnalyticsListenerOverviewBucketGranularity {
+	return []MailAnalyticsListenerOverviewBucketGranularity{
+		MailAnalyticsListenerOverviewBucketGranularityHour,
+		MailAnalyticsListenerOverviewBucketGranularityDay,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s MailAnalyticsListenerOverviewBucketGranularity) MarshalText() ([]byte, error) {
+	switch s {
+	case MailAnalyticsListenerOverviewBucketGranularityHour:
+		return []byte(s), nil
+	case MailAnalyticsListenerOverviewBucketGranularityDay:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *MailAnalyticsListenerOverviewBucketGranularity) UnmarshalText(data []byte) error {
+	switch MailAnalyticsListenerOverviewBucketGranularity(data) {
+	case MailAnalyticsListenerOverviewBucketGranularityHour:
+		*s = MailAnalyticsListenerOverviewBucketGranularityHour
+		return nil
+	case MailAnalyticsListenerOverviewBucketGranularityDay:
+		*s = MailAnalyticsListenerOverviewBucketGranularityDay
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// MailAnalyticsListenerOverviewHeaders wraps MailAnalyticsListenerOverview with response headers.
+type MailAnalyticsListenerOverviewHeaders struct {
+	XTraceID OptString
+	Response MailAnalyticsListenerOverview
+}
+
+// GetXTraceID returns the value of XTraceID.
+func (s *MailAnalyticsListenerOverviewHeaders) GetXTraceID() OptString {
+	return s.XTraceID
+}
+
+// GetResponse returns the value of Response.
+func (s *MailAnalyticsListenerOverviewHeaders) GetResponse() MailAnalyticsListenerOverview {
+	return s.Response
+}
+
+// SetXTraceID sets the value of XTraceID.
+func (s *MailAnalyticsListenerOverviewHeaders) SetXTraceID(val OptString) {
+	s.XTraceID = val
+}
+
+// SetResponse sets the value of Response.
+func (s *MailAnalyticsListenerOverviewHeaders) SetResponse(val MailAnalyticsListenerOverview) {
+	s.Response = val
+}
+
+func (*MailAnalyticsListenerOverviewHeaders) getMailAnalyticsListenerOverviewRes() {}
+
+// Ref: #/MailAnalyticsListenerOverviewMetrics
+type MailAnalyticsListenerOverviewMetrics struct {
+	AcceptedMessages MailAnalyticsAcceptedMessages `json:"accepted_messages"`
+	// Egress tasks created for the listener, including protocol-generated tasks.
+	EgressTasks         int64                      `json:"egress_tasks"`
+	DeliverySuccessRate MailAnalyticsRate          `json:"delivery_success_rate"`
+	SMTPResponses       MailAnalyticsSMTPResponses `json:"smtp_responses"`
+}
+
+// GetAcceptedMessages returns the value of AcceptedMessages.
+func (s *MailAnalyticsListenerOverviewMetrics) GetAcceptedMessages() MailAnalyticsAcceptedMessages {
+	return s.AcceptedMessages
+}
+
+// GetEgressTasks returns the value of EgressTasks.
+func (s *MailAnalyticsListenerOverviewMetrics) GetEgressTasks() int64 {
+	return s.EgressTasks
+}
+
+// GetDeliverySuccessRate returns the value of DeliverySuccessRate.
+func (s *MailAnalyticsListenerOverviewMetrics) GetDeliverySuccessRate() MailAnalyticsRate {
+	return s.DeliverySuccessRate
+}
+
+// GetSMTPResponses returns the value of SMTPResponses.
+func (s *MailAnalyticsListenerOverviewMetrics) GetSMTPResponses() MailAnalyticsSMTPResponses {
+	return s.SMTPResponses
+}
+
+// SetAcceptedMessages sets the value of AcceptedMessages.
+func (s *MailAnalyticsListenerOverviewMetrics) SetAcceptedMessages(val MailAnalyticsAcceptedMessages) {
+	s.AcceptedMessages = val
+}
+
+// SetEgressTasks sets the value of EgressTasks.
+func (s *MailAnalyticsListenerOverviewMetrics) SetEgressTasks(val int64) {
+	s.EgressTasks = val
+}
+
+// SetDeliverySuccessRate sets the value of DeliverySuccessRate.
+func (s *MailAnalyticsListenerOverviewMetrics) SetDeliverySuccessRate(val MailAnalyticsRate) {
+	s.DeliverySuccessRate = val
+}
+
+// SetSMTPResponses sets the value of SMTPResponses.
+func (s *MailAnalyticsListenerOverviewMetrics) SetSMTPResponses(val MailAnalyticsSMTPResponses) {
+	s.SMTPResponses = val
+}
+
+// Ref: #/MailAnalyticsListenerOverviewTimePoint
+type MailAnalyticsListenerOverviewTimePoint struct {
+	BucketStart time.Time                            `json:"bucket_start"`
+	BucketEnd   time.Time                            `json:"bucket_end"`
+	Metrics     MailAnalyticsListenerOverviewMetrics `json:"metrics"`
+}
+
+// GetBucketStart returns the value of BucketStart.
+func (s *MailAnalyticsListenerOverviewTimePoint) GetBucketStart() time.Time {
+	return s.BucketStart
+}
+
+// GetBucketEnd returns the value of BucketEnd.
+func (s *MailAnalyticsListenerOverviewTimePoint) GetBucketEnd() time.Time {
+	return s.BucketEnd
+}
+
+// GetMetrics returns the value of Metrics.
+func (s *MailAnalyticsListenerOverviewTimePoint) GetMetrics() MailAnalyticsListenerOverviewMetrics {
+	return s.Metrics
+}
+
+// SetBucketStart sets the value of BucketStart.
+func (s *MailAnalyticsListenerOverviewTimePoint) SetBucketStart(val time.Time) {
+	s.BucketStart = val
+}
+
+// SetBucketEnd sets the value of BucketEnd.
+func (s *MailAnalyticsListenerOverviewTimePoint) SetBucketEnd(val time.Time) {
+	s.BucketEnd = val
+}
+
+// SetMetrics sets the value of Metrics.
+func (s *MailAnalyticsListenerOverviewTimePoint) SetMetrics(val MailAnalyticsListenerOverviewMetrics) {
+	s.Metrics = val
+}
+
 // Ref: #/MailAnalyticsMessageContent
 type MailAnalyticsMessageContent struct {
 	TaskCount                   int64                   `json:"task_count"`
@@ -11930,12 +12332,14 @@ func (*NotFoundHeaders) getAutoReplyTemplateRes()                               
 func (*NotFoundHeaders) getDomainRes()                                          {}
 func (*NotFoundHeaders) getInboundRouteRes()                                    {}
 func (*NotFoundHeaders) getListenerMTARateLimitOverrideRes()                    {}
+func (*NotFoundHeaders) getListenerNotificationsRes()                           {}
 func (*NotFoundHeaders) getListenerRes()                                        {}
 func (*NotFoundHeaders) getMailAnalyticsActivityHeatmapRes()                    {}
 func (*NotFoundHeaders) getMailAnalyticsBreakdownRes()                          {}
 func (*NotFoundHeaders) getMailAnalyticsComparisonRes()                         {}
 func (*NotFoundHeaders) getMailAnalyticsDomainLifecycleRes()                    {}
 func (*NotFoundHeaders) getMailAnalyticsLifecycleRes()                          {}
+func (*NotFoundHeaders) getMailAnalyticsListenerOverviewRes()                   {}
 func (*NotFoundHeaders) getMailAnalyticsOverviewRes()                           {}
 func (*NotFoundHeaders) getMailAnalyticsSeriesRes()                             {}
 func (*NotFoundHeaders) getMailAnalyticsTaskSizeStatisticsRes()                 {}
@@ -11996,6 +12400,7 @@ func (*NotFoundHeaders) setWebhookEndpointActiveRes()                           
 func (*NotFoundHeaders) updateAutoReplyTemplateRes()                            {}
 func (*NotFoundHeaders) updateInboundRouteRes()                                 {}
 func (*NotFoundHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*NotFoundHeaders) updateListenerNotificationsRes()                        {}
 func (*NotFoundHeaders) updateListenerRes()                                     {}
 func (*NotFoundHeaders) updateListenerRspamdScanningRes()                       {}
 func (*NotFoundHeaders) updateRecipientSetRes()                                 {}
@@ -16436,12 +16841,14 @@ func (*ServiceUnavailableHeaders) getAutoReplyTemplateRes()                     
 func (*ServiceUnavailableHeaders) getDomainRes()                                          {}
 func (*ServiceUnavailableHeaders) getInboundRouteRes()                                    {}
 func (*ServiceUnavailableHeaders) getListenerMTARateLimitOverrideRes()                    {}
+func (*ServiceUnavailableHeaders) getListenerNotificationsRes()                           {}
 func (*ServiceUnavailableHeaders) getListenerRes()                                        {}
 func (*ServiceUnavailableHeaders) getMailAnalyticsActivityHeatmapRes()                    {}
 func (*ServiceUnavailableHeaders) getMailAnalyticsBreakdownRes()                          {}
 func (*ServiceUnavailableHeaders) getMailAnalyticsComparisonRes()                         {}
 func (*ServiceUnavailableHeaders) getMailAnalyticsDomainLifecycleRes()                    {}
 func (*ServiceUnavailableHeaders) getMailAnalyticsLifecycleRes()                          {}
+func (*ServiceUnavailableHeaders) getMailAnalyticsListenerOverviewRes()                   {}
 func (*ServiceUnavailableHeaders) getMailAnalyticsOverviewRes()                           {}
 func (*ServiceUnavailableHeaders) getMailAnalyticsSeriesRes()                             {}
 func (*ServiceUnavailableHeaders) getMailAnalyticsTaskSizeStatisticsRes()                 {}
@@ -16502,6 +16909,7 @@ func (*ServiceUnavailableHeaders) setWebhookEndpointActiveRes()                 
 func (*ServiceUnavailableHeaders) updateAutoReplyTemplateRes()                            {}
 func (*ServiceUnavailableHeaders) updateInboundRouteRes()                                 {}
 func (*ServiceUnavailableHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*ServiceUnavailableHeaders) updateListenerNotificationsRes()                        {}
 func (*ServiceUnavailableHeaders) updateListenerRes()                                     {}
 func (*ServiceUnavailableHeaders) updateListenerRspamdScanningRes()                       {}
 func (*ServiceUnavailableHeaders) updateRecipientSetRes()                                 {}
@@ -18684,12 +19092,14 @@ func (*TooManyRequestsHeaders) getAutoReplyTemplateRes()                        
 func (*TooManyRequestsHeaders) getDomainRes()                                          {}
 func (*TooManyRequestsHeaders) getInboundRouteRes()                                    {}
 func (*TooManyRequestsHeaders) getListenerMTARateLimitOverrideRes()                    {}
+func (*TooManyRequestsHeaders) getListenerNotificationsRes()                           {}
 func (*TooManyRequestsHeaders) getListenerRes()                                        {}
 func (*TooManyRequestsHeaders) getMailAnalyticsActivityHeatmapRes()                    {}
 func (*TooManyRequestsHeaders) getMailAnalyticsBreakdownRes()                          {}
 func (*TooManyRequestsHeaders) getMailAnalyticsComparisonRes()                         {}
 func (*TooManyRequestsHeaders) getMailAnalyticsDomainLifecycleRes()                    {}
 func (*TooManyRequestsHeaders) getMailAnalyticsLifecycleRes()                          {}
+func (*TooManyRequestsHeaders) getMailAnalyticsListenerOverviewRes()                   {}
 func (*TooManyRequestsHeaders) getMailAnalyticsOverviewRes()                           {}
 func (*TooManyRequestsHeaders) getMailAnalyticsSeriesRes()                             {}
 func (*TooManyRequestsHeaders) getMailAnalyticsTaskSizeStatisticsRes()                 {}
@@ -18750,6 +19160,7 @@ func (*TooManyRequestsHeaders) setWebhookEndpointActiveRes()                    
 func (*TooManyRequestsHeaders) updateAutoReplyTemplateRes()                            {}
 func (*TooManyRequestsHeaders) updateInboundRouteRes()                                 {}
 func (*TooManyRequestsHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*TooManyRequestsHeaders) updateListenerNotificationsRes()                        {}
 func (*TooManyRequestsHeaders) updateListenerRes()                                     {}
 func (*TooManyRequestsHeaders) updateListenerRspamdScanningRes()                       {}
 func (*TooManyRequestsHeaders) updateRecipientSetRes()                                 {}
@@ -18845,12 +19256,14 @@ func (*UnauthorizedHeaders) getAutoReplyTemplateRes()                           
 func (*UnauthorizedHeaders) getDomainRes()                                          {}
 func (*UnauthorizedHeaders) getInboundRouteRes()                                    {}
 func (*UnauthorizedHeaders) getListenerMTARateLimitOverrideRes()                    {}
+func (*UnauthorizedHeaders) getListenerNotificationsRes()                           {}
 func (*UnauthorizedHeaders) getListenerRes()                                        {}
 func (*UnauthorizedHeaders) getMailAnalyticsActivityHeatmapRes()                    {}
 func (*UnauthorizedHeaders) getMailAnalyticsBreakdownRes()                          {}
 func (*UnauthorizedHeaders) getMailAnalyticsComparisonRes()                         {}
 func (*UnauthorizedHeaders) getMailAnalyticsDomainLifecycleRes()                    {}
 func (*UnauthorizedHeaders) getMailAnalyticsLifecycleRes()                          {}
+func (*UnauthorizedHeaders) getMailAnalyticsListenerOverviewRes()                   {}
 func (*UnauthorizedHeaders) getMailAnalyticsOverviewRes()                           {}
 func (*UnauthorizedHeaders) getMailAnalyticsSeriesRes()                             {}
 func (*UnauthorizedHeaders) getMailAnalyticsTaskSizeStatisticsRes()                 {}
@@ -18911,6 +19324,7 @@ func (*UnauthorizedHeaders) setWebhookEndpointActiveRes()                       
 func (*UnauthorizedHeaders) updateAutoReplyTemplateRes()                            {}
 func (*UnauthorizedHeaders) updateInboundRouteRes()                                 {}
 func (*UnauthorizedHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*UnauthorizedHeaders) updateListenerNotificationsRes()                        {}
 func (*UnauthorizedHeaders) updateListenerRes()                                     {}
 func (*UnauthorizedHeaders) updateListenerRspamdScanningRes()                       {}
 func (*UnauthorizedHeaders) updateRecipientSetRes()                                 {}
@@ -18996,6 +19410,7 @@ func (*UnprocessableContentHeaders) setWebhookEndpointActiveRes()               
 func (*UnprocessableContentHeaders) updateAutoReplyTemplateRes()                            {}
 func (*UnprocessableContentHeaders) updateInboundRouteRes()                                 {}
 func (*UnprocessableContentHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*UnprocessableContentHeaders) updateListenerNotificationsRes()                        {}
 func (*UnprocessableContentHeaders) updateListenerRes()                                     {}
 func (*UnprocessableContentHeaders) updateListenerRspamdScanningRes()                       {}
 func (*UnprocessableContentHeaders) updateRecipientSetRes()                                 {}
@@ -19072,6 +19487,7 @@ func (*UnsupportedMediaTypeHeaders) setWebhookEndpointActiveRes()               
 func (*UnsupportedMediaTypeHeaders) updateAutoReplyTemplateRes()                            {}
 func (*UnsupportedMediaTypeHeaders) updateInboundRouteRes()                                 {}
 func (*UnsupportedMediaTypeHeaders) updateListenerDefaultTerminalActionRes()                {}
+func (*UnsupportedMediaTypeHeaders) updateListenerNotificationsRes()                        {}
 func (*UnsupportedMediaTypeHeaders) updateListenerRes()                                     {}
 func (*UnsupportedMediaTypeHeaders) updateListenerRspamdScanningRes()                       {}
 func (*UnsupportedMediaTypeHeaders) updateRecipientSetRes()                                 {}
@@ -19236,6 +19652,21 @@ func (s *UpdateListenerDefaultTerminalActionRequest) SetActionType(val DefaultTe
 // SetActionPayload sets the value of ActionPayload.
 func (s *UpdateListenerDefaultTerminalActionRequest) SetActionPayload(val OptDefaultTerminalActionPayload) {
 	s.ActionPayload = val
+}
+
+// Ref: #/UpdateListenerNotificationsRequest
+type UpdateListenerNotificationsRequest struct {
+	Enabled bool `json:"enabled"`
+}
+
+// GetEnabled returns the value of Enabled.
+func (s *UpdateListenerNotificationsRequest) GetEnabled() bool {
+	return s.Enabled
+}
+
+// SetEnabled sets the value of Enabled.
+func (s *UpdateListenerNotificationsRequest) SetEnabled(val bool) {
+	s.Enabled = val
 }
 
 // Ref: #/UpdateListenerRequest

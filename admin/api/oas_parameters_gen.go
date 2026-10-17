@@ -361,6 +361,14 @@ type GetListenerMTARateLimitOverrideParams struct {
 	ListenerID uuid.UUID
 }
 
+// GetListenerNotificationsParams is parameters of getListenerNotifications operation.
+type GetListenerNotificationsParams struct {
+	// Tenant slug.
+	Slug TenantSlug
+	// Listener identifier.
+	ListenerID uuid.UUID
+}
+
 // GetMailAnalyticsActivityHeatmapParams is parameters of getMailAnalyticsActivityHeatmap operation.
 type GetMailAnalyticsActivityHeatmapParams struct {
 	StartAt time.Time
@@ -407,6 +415,19 @@ type GetMailAnalyticsLifecycleParams struct {
 	EndAt time.Time
 	// Exclusive UTC upper bound for observed lifecycle facts; must not precede end_at.
 	ObservationEndAt time.Time
+	// Tenant slug.
+	Slug TenantSlug
+}
+
+// GetMailAnalyticsListenerOverviewParams is parameters of getMailAnalyticsListenerOverview operation.
+type GetMailAnalyticsListenerOverviewParams struct {
+	// Inclusive UTC start of the analytics interval.
+	StartAt time.Time
+	// Exclusive UTC end of the analytics interval.
+	EndAt time.Time
+	// Tenant listener to report. A deleted or unknown listener returns a deleted_or_unknown identity with
+	// any retained facts.
+	ListenerID uuid.UUID
 	// Tenant slug.
 	Slug TenantSlug
 }
@@ -983,6 +1004,14 @@ type UpdateListenerParams struct {
 
 // UpdateListenerDefaultTerminalActionParams is parameters of updateListenerDefaultTerminalAction operation.
 type UpdateListenerDefaultTerminalActionParams struct {
+	// Tenant slug.
+	Slug TenantSlug
+	// Listener identifier.
+	ListenerID uuid.UUID
+}
+
+// UpdateListenerNotificationsParams is parameters of updateListenerNotifications operation.
+type UpdateListenerNotificationsParams struct {
 	// Tenant slug.
 	Slug TenantSlug
 	// Listener identifier.

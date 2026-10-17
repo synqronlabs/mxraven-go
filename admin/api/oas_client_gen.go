@@ -48,7 +48,9 @@ type Invoker interface {
 	ClaimTenantIdentityAccess(ctx context.Context, params ClaimTenantIdentityAccessParams) (ClaimTenantIdentityAccessRes, error)
 	// CreateAPIKey invokes createAPIKey operation.
 	//
-	// The plaintext secret is returned exactly once. Do not blindly retry an uncertain response.
+	// The listener may be a submission listener, where the key authenticates SMTP submission, or an MTA
+	// listener, where it authenticates the client notification channel. The plaintext secret is returned
+	// exactly once. Do not blindly retry an uncertain response.
 	//
 	// POST /v2/tenants/{slug}/listeners/{listener_id}/api-keys
 	CreateAPIKey(ctx context.Context, params CreateAPIKeyParams) (CreateAPIKeyRes, error)
@@ -197,7 +199,7 @@ type Invoker interface {
 	CreateWebhookEndpoint(ctx context.Context, request *CreateWebhookEndpointRequest, params CreateWebhookEndpointParams) (CreateWebhookEndpointRes, error)
 	// DeleteAPIKey invokes deleteAPIKey operation.
 	//
-	// Delete a submission-listener API key.
+	// Delete a listener API key.
 	//
 	// DELETE /v2/tenants/{slug}/listeners/{listener_id}/api-keys/{api_key_id}
 	DeleteAPIKey(ctx context.Context, params DeleteAPIKeyParams) (DeleteAPIKeyRes, error)
@@ -327,6 +329,13 @@ type Invoker interface {
 	//
 	// GET /v2/tenants/{slug}/listeners/{listener_id}/mta-rate-limit-override
 	GetListenerMTARateLimitOverride(ctx context.Context, params GetListenerMTARateLimitOverrideParams) (GetListenerMTARateLimitOverrideRes, error)
+	// GetListenerNotifications invokes getListenerNotifications operation.
+	//
+	// Reports whether the listener publishes client notification events, and the subject and durable
+	// consumer clients use to read them.
+	//
+	// GET /v2/tenants/{slug}/listeners/{listener_id}/notifications
+	GetListenerNotifications(ctx context.Context, params GetListenerNotificationsParams) (GetListenerNotificationsRes, error)
 	// GetMailAnalyticsActivityHeatmap invokes getMailAnalyticsActivityHeatmap operation.
 	//
 	// Returns exactly 168 zero-filled weekday/hour cells for egress task-created facts. Weekdays use ISO
@@ -374,6 +383,26 @@ type Invoker interface {
 	//
 	// GET /v2/tenants/{slug}/mail-analytics/lifecycle
 	GetMailAnalyticsLifecycle(ctx context.Context, params GetMailAnalyticsLifecycleParams) (GetMailAnalyticsLifecycleRes, error)
+	// GetMailAnalyticsListenerOverview invokes getMailAnalyticsListenerOverview operation.
+	//
+	// Returns the fixed per-listener analytics catalog as a summary and a zero-filled UTC time series:
+	// accepted messages, egress task volume, delivery success, and SMTP response classes. The interval is
+	// start-inclusive and end-exclusive and may span at most 31 days. Inputs must use a zero UTC offset.
+	// The server selects hourly buckets for intervals up to 72 hours and daily buckets for longer
+	// intervals. Interval boundaries must align to the selected UTC calendar-hour or calendar-day
+	// granularity. Time-series buckets are zero-filled, ordered oldest first, and exactly partition the
+	// interval; summary values equal the corresponding time-series totals.
+	//
+	// Facts belong to the interval and bucket containing their occurred_at value, and only facts recorded
+	// for the requested listener are counted. Terminal outcomes count unique task IDs after replacement
+	// finalization. Delivery success is unique succeeded tasks divided by unique succeeded, failed, and
+	// expired tasks. SMTP response classes contain only SMTP-channel lifecycle facts with a non-zero 2xx,
+	// 4xx, or 5xx smtp_status_code. A listener that no longer exists is reported as deleted_or_unknown.
+	// Results are read from the eventually consistent mail ledger and do not represent a completeness
+	// watermark.
+	//
+	// GET /v2/tenants/{slug}/mail-analytics/listener-overview
+	GetMailAnalyticsListenerOverview(ctx context.Context, params GetMailAnalyticsListenerOverviewParams) (GetMailAnalyticsListenerOverviewRes, error)
 	// GetMailAnalyticsOverview invokes getMailAnalyticsOverview operation.
 	//
 	// Returns the fixed Phase 1 mail analytics catalog as a summary, a UTC time series, and a bounded
@@ -527,7 +556,7 @@ type Invoker interface {
 	GetWebhookEndpointByRef(ctx context.Context, params GetWebhookEndpointByRefParams) (GetWebhookEndpointByRefRes, error)
 	// ListAPIKeys invokes listAPIKeys operation.
 	//
-	// List submission-listener API keys.
+	// List listener API keys.
 	//
 	// GET /v2/tenants/{slug}/listeners/{listener_id}/api-keys
 	ListAPIKeys(ctx context.Context, params ListAPIKeysParams) (ListAPIKeysRes, error)
@@ -769,6 +798,14 @@ type Invoker interface {
 	//
 	// PUT /v2/tenants/{slug}/listeners/{listener_id}/default-terminal-action
 	UpdateListenerDefaultTerminalAction(ctx context.Context, request *UpdateListenerDefaultTerminalActionRequest, params UpdateListenerDefaultTerminalActionParams) (UpdateListenerDefaultTerminalActionRes, error)
+	// UpdateListenerNotifications invokes updateListenerNotifications operation.
+	//
+	// Enabling the setting creates the listener's durable consumer and starts event publishing. Disabling
+	// it stops publishing and retains the consumer, so events a client already handled are not replayed if
+	// it is enabled again.
+	//
+	// PUT /v2/tenants/{slug}/listeners/{listener_id}/notifications
+	UpdateListenerNotifications(ctx context.Context, request *UpdateListenerNotificationsRequest, params UpdateListenerNotificationsParams) (UpdateListenerNotificationsRes, error)
 	// UpdateListenerRspamdScanning invokes updateListenerRspamdScanning operation.
 	//
 	// Update listener Rspamd scanning.
@@ -1342,7 +1379,9 @@ func (c *Client) sendClaimTenantIdentityAccess(ctx context.Context, params Claim
 
 // CreateAPIKey invokes createAPIKey operation.
 //
-// The plaintext secret is returned exactly once. Do not blindly retry an uncertain response.
+// The listener may be a submission listener, where the key authenticates SMTP submission, or an MTA
+// listener, where it authenticates the client notification channel. The plaintext secret is returned
+// exactly once. Do not blindly retry an uncertain response.
 //
 // POST /v2/tenants/{slug}/listeners/{listener_id}/api-keys
 func (c *Client) CreateAPIKey(ctx context.Context, params CreateAPIKeyParams) (CreateAPIKeyRes, error) {
@@ -4013,7 +4052,7 @@ func (c *Client) sendCreateWebhookEndpoint(ctx context.Context, request *CreateW
 
 // DeleteAPIKey invokes deleteAPIKey operation.
 //
-// Delete a submission-listener API key.
+// Delete a listener API key.
 //
 // DELETE /v2/tenants/{slug}/listeners/{listener_id}/api-keys/{api_key_id}
 func (c *Client) DeleteAPIKey(ctx context.Context, params DeleteAPIKeyParams) (DeleteAPIKeyRes, error) {
@@ -6604,6 +6643,124 @@ func (c *Client) sendGetListenerMTARateLimitOverride(ctx context.Context, params
 	return result, nil
 }
 
+// GetListenerNotifications invokes getListenerNotifications operation.
+//
+// Reports whether the listener publishes client notification events, and the subject and durable
+// consumer clients use to read them.
+//
+// GET /v2/tenants/{slug}/listeners/{listener_id}/notifications
+func (c *Client) GetListenerNotifications(ctx context.Context, params GetListenerNotificationsParams) (GetListenerNotificationsRes, error) {
+	res, err := c.sendGetListenerNotifications(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetListenerNotifications(ctx context.Context, params GetListenerNotificationsParams) (res GetListenerNotificationsRes, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [5]string
+	pathParts[0] = "/v2/tenants/"
+	{
+		// Encode "slug" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "slug",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			if unwrapped := string(params.Slug); true {
+				return e.EncodeValue(conv.StringToString(unwrapped))
+			}
+			return nil
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/listeners/"
+	{
+		// Encode "listener_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "listener_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ListenerID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/notifications"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+
+			switch err := c.securityBearerAuth(ctx, GetListenerNotificationsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	result, err := decodeGetListenerNotificationsResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
 // GetMailAnalyticsActivityHeatmap invokes getMailAnalyticsActivityHeatmap operation.
 //
 // Returns exactly 168 zero-filled weekday/hour cells for egress task-created facts. Weekdays use ISO
@@ -7366,6 +7523,163 @@ func (c *Client) sendGetMailAnalyticsLifecycle(ctx context.Context, params GetMa
 	}()
 
 	result, err := decodeGetMailAnalyticsLifecycleResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetMailAnalyticsListenerOverview invokes getMailAnalyticsListenerOverview operation.
+//
+// Returns the fixed per-listener analytics catalog as a summary and a zero-filled UTC time series:
+// accepted messages, egress task volume, delivery success, and SMTP response classes. The interval is
+// start-inclusive and end-exclusive and may span at most 31 days. Inputs must use a zero UTC offset.
+// The server selects hourly buckets for intervals up to 72 hours and daily buckets for longer
+// intervals. Interval boundaries must align to the selected UTC calendar-hour or calendar-day
+// granularity. Time-series buckets are zero-filled, ordered oldest first, and exactly partition the
+// interval; summary values equal the corresponding time-series totals.
+//
+// Facts belong to the interval and bucket containing their occurred_at value, and only facts recorded
+// for the requested listener are counted. Terminal outcomes count unique task IDs after replacement
+// finalization. Delivery success is unique succeeded tasks divided by unique succeeded, failed, and
+// expired tasks. SMTP response classes contain only SMTP-channel lifecycle facts with a non-zero 2xx,
+// 4xx, or 5xx smtp_status_code. A listener that no longer exists is reported as deleted_or_unknown.
+// Results are read from the eventually consistent mail ledger and do not represent a completeness
+// watermark.
+//
+// GET /v2/tenants/{slug}/mail-analytics/listener-overview
+func (c *Client) GetMailAnalyticsListenerOverview(ctx context.Context, params GetMailAnalyticsListenerOverviewParams) (GetMailAnalyticsListenerOverviewRes, error) {
+	res, err := c.sendGetMailAnalyticsListenerOverview(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetMailAnalyticsListenerOverview(ctx context.Context, params GetMailAnalyticsListenerOverviewParams) (res GetMailAnalyticsListenerOverviewRes, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [3]string
+	pathParts[0] = "/v2/tenants/"
+	{
+		// Encode "slug" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "slug",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			if unwrapped := string(params.Slug); true {
+				return e.EncodeValue(conv.StringToString(unwrapped))
+			}
+			return nil
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/mail-analytics/listener-overview"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	q := uri.NewQueryEncoder()
+	{
+		// Encode "start_at" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "start_at",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.DateTimeToString(params.StartAt))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "end_at" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "end_at",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.DateTimeToString(params.EndAt))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	{
+		// Encode "listener_id" parameter.
+		cfg := uri.QueryParameterEncodingConfig{
+			Name:    "listener_id",
+			Style:   uri.QueryStyleForm,
+			Explode: true,
+		}
+
+		if err := q.EncodeParam(cfg, func(e uri.Encoder) error {
+			return e.EncodeValue(conv.UUIDToString(params.ListenerID))
+		}); err != nil {
+			return res, errors.Wrap(err, "encode query")
+		}
+	}
+	u.RawQuery = q.Values().Encode()
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+
+			switch err := c.securityBearerAuth(ctx, GetMailAnalyticsListenerOverviewOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	result, err := decodeGetMailAnalyticsListenerOverviewResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -9941,7 +10255,7 @@ func (c *Client) sendGetWebhookEndpointByRef(ctx context.Context, params GetWebh
 
 // ListAPIKeys invokes listAPIKeys operation.
 //
-// List submission-listener API keys.
+// List listener API keys.
 //
 // GET /v2/tenants/{slug}/listeners/{listener_id}/api-keys
 func (c *Client) ListAPIKeys(ctx context.Context, params ListAPIKeysParams) (ListAPIKeysRes, error) {
@@ -15750,6 +16064,128 @@ func (c *Client) sendUpdateListenerDefaultTerminalAction(ctx context.Context, re
 	}()
 
 	result, err := decodeUpdateListenerDefaultTerminalActionResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// UpdateListenerNotifications invokes updateListenerNotifications operation.
+//
+// Enabling the setting creates the listener's durable consumer and starts event publishing. Disabling
+// it stops publishing and retains the consumer, so events a client already handled are not replayed if
+// it is enabled again.
+//
+// PUT /v2/tenants/{slug}/listeners/{listener_id}/notifications
+func (c *Client) UpdateListenerNotifications(ctx context.Context, request *UpdateListenerNotificationsRequest, params UpdateListenerNotificationsParams) (UpdateListenerNotificationsRes, error) {
+	res, err := c.sendUpdateListenerNotifications(ctx, request, params)
+	return res, err
+}
+
+func (c *Client) sendUpdateListenerNotifications(ctx context.Context, request *UpdateListenerNotificationsRequest, params UpdateListenerNotificationsParams) (res UpdateListenerNotificationsRes, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [5]string
+	pathParts[0] = "/v2/tenants/"
+	{
+		// Encode "slug" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "slug",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			if unwrapped := string(params.Slug); true {
+				return e.EncodeValue(conv.StringToString(unwrapped))
+			}
+			return nil
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/listeners/"
+	{
+		// Encode "listener_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "listener_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.ListenerID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/notifications"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "PUT", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeUpdateListenerNotificationsRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+
+			switch err := c.securityBearerAuth(ctx, UpdateListenerNotificationsOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	result, err := decodeUpdateListenerNotificationsResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

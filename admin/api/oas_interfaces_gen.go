@@ -197,6 +197,10 @@ type GetListenerMTARateLimitOverrideRes interface {
 	getListenerMTARateLimitOverrideRes()
 }
 
+type GetListenerNotificationsRes interface {
+	getListenerNotificationsRes()
+}
+
 type GetListenerRes interface {
 	getListenerRes()
 }
@@ -219,6 +223,10 @@ type GetMailAnalyticsDomainLifecycleRes interface {
 
 type GetMailAnalyticsLifecycleRes interface {
 	getMailAnalyticsLifecycleRes()
+}
+
+type GetMailAnalyticsListenerOverviewRes interface {
+	getMailAnalyticsListenerOverviewRes()
 }
 
 type GetMailAnalyticsOverviewRes interface {
@@ -459,6 +467,10 @@ type UpdateInboundRouteRes interface {
 
 type UpdateListenerDefaultTerminalActionRes interface {
 	updateListenerDefaultTerminalActionRes()
+}
+
+type UpdateListenerNotificationsRes interface {
+	updateListenerNotificationsRes()
 }
 
 type UpdateListenerRes interface {
