@@ -248,6 +248,10 @@ default); fetch the message promptly after receiving the webhook.
 
 Treat `raw_email.access_token` as a secret. Do not log it.
 
+To decode the downloaded bytes into headers, addresses, bodies, and attachments,
+use [`mail/mime`](../mime/README.md): `mime.ParseEmail` parses bytes you already
+hold, and `mime.FetchAndParseRawEmail` downloads and parses in one step.
+
 ## Delivery semantics
 
 - `DELIVER_WEBHOOK` is delivered at least once. `task_id` is deterministic and

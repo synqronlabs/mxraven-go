@@ -5,8 +5,9 @@ covers both sides of an integration:
 
 - **Control plane:** manage tenants, listeners, domains, routing rules,
   webhook endpoints, suppressions, and analytics.
-- **Mail runtime:** submit mail over SMTP, receive and verify webhooks, send
-  recipient feedback, and consume client notification events over NATS.
+- **Mail runtime:** submit mail over SMTP, receive and verify webhooks, parse
+  inbound messages, send recipient feedback, and consume client notification
+  events over NATS.
 
 ## Packages
 
@@ -18,6 +19,7 @@ covers both sides of an integration:
 | `mail/webhook` | `github.com/synqronlabs/mxraven-go/mail/webhook` | Webhook verification and decoding. |
 | `mail/feedback` | `github.com/synqronlabs/mxraven-go/mail/feedback` | Spam/ham learning and one-click unsubscribe. |
 | `mail/notify` | `github.com/synqronlabs/mxraven-go/mail/notify` | Client notification stream over NATS. |
+| `mail/mime` | `github.com/synqronlabs/mxraven-go/mail/mime` | Inbound RFC 5322 / MIME parsing. |
 
 ## Requirements
 
@@ -269,6 +271,40 @@ The signing secret is shown only once, when the endpoint is created or its
 secret is rotated. See the [`webhook` README](./mail/webhook/README.md) for the
 signature scheme, payload examples, and delivery semantics.
 
+## Inbound parsing (`mail/mime`)
+
+An inbound-email webhook carries a `raw_email` reference rather than the message
+bytes. `mail/mime` downloads and parses it into headers, addresses, text and
+HTML bodies, and decoded attachments:
+
+```go
+import (
+	"context"
+
+	"github.com/synqronlabs/mxraven-go/mail/mime"
+)
+
+if event.InboundEmail != nil {
+	email, err := mime.FetchAndParseRawEmail(context.Background(), event.InboundEmail.RawEmail, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, attachment := range email.Attachments {
+		log.Printf("%s (%s), inline=%t", attachment.Filename, attachment.ContentType, attachment.Inline)
+	}
+}
+```
+
+`mime.ParseEmail` parses bytes you already hold. The parser handles
+`multipart/mixed`, `multipart/alternative`, and `multipart/related`, decodes
+`base64` and `quoted-printable` transfer encodings, decodes RFC 2047 encoded
+words and RFC 2231 parameters, and falls back to UTF-8 and then Windows-1252 for
+unknown charsets. Inline images are reported as attachments with `Inline` set
+and their `ContentID`.
+
+See the [`mime` README](./mail/mime/README.md) for the parsed-message fields and
+parser limits.
+
 ## Feedback (`mail/feedback`)
 
 `mail/feedback` submits recipient feedback to the mxRaven feedback service.
@@ -369,6 +405,7 @@ mail/                 SMTP submission SDK
   webhook/            Webhook verification and decoding
   feedback/           Spam/ham learning and one-click unsubscribe
   notify/             Client notification stream over NATS
+  mime/               Inbound RFC 5322 / MIME parsing
 tools/openapifilter/  Derives the tenant-only OpenAPI contract for generation
 ```
 

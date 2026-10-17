@@ -37,6 +37,8 @@
 //     feedback to the mxRaven feedback service.
 //   - github.com/synqronlabs/mxraven-go/mail/notify consumes client
 //     notification events over NATS.
+//   - github.com/synqronlabs/mxraven-go/mail/mime parses inbound RFC 5322
+//     messages into headers, addresses, bodies, and attachments.
 //
 // Control-plane administration, including suppression lists, deliverability
 // reporting, and mail analytics, lives in
