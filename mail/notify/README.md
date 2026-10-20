@@ -38,7 +38,7 @@ The consumer name is also derivable as `notify-<listener_id>`, which is what
 
 ```go
 client, err := notify.New(
-	notify.WithURL("wss://nats.mxraven.com"),
+	notify.WithURL("wss://notifications.mxraven.com"),
 	notify.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
 	notify.WithListener(listenerID),
 )

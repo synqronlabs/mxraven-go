@@ -5,7 +5,7 @@
 // exact raw RFC 822 bytes that mxRaven processed must be submitted.
 //
 //	client, err := feedback.New(
-//		feedback.WithBaseURL("https://feedback.mxraven.com"),
+//		feedback.WithBaseURL("https://api.mxraven.com"),
 //		feedback.WithCredentials(username, secret),
 //	)
 //	if err != nil {

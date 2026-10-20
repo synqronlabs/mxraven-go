@@ -33,7 +33,7 @@ import (
 
 func main() {
 	client, err := mail.New(
-		mail.WithAddress("smtp.mxraven.com", mail.DefaultAddressPort),
+		mail.WithAddress("smtp.mxraven.email", mail.DefaultAddressPort),
 		mail.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
 	)
 	if err != nil {

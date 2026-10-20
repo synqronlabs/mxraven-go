@@ -198,7 +198,7 @@ import (
 )
 
 client, err := mail.New(
-	mail.WithAddress("smtp.mxraven.com", mail.DefaultAddressPort),
+	mail.WithAddress("smtp.mxraven.email", mail.DefaultAddressPort),
 	mail.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
 )
 if err != nil {
@@ -321,7 +321,7 @@ import (
 )
 
 client, err := feedback.New(
-	feedback.WithBaseURL("https://feedback.mxraven.com"),
+	feedback.WithBaseURL("https://api.mxraven.com"),
 	feedback.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
 )
 if err != nil {
@@ -363,7 +363,7 @@ import (
 )
 
 client, err := notify.New(
-	notify.WithURL("wss://nats.mxraven.com"),
+	notify.WithURL("wss://notifications.mxraven.com"),
 	notify.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
 	notify.WithListener(listenerID),
 )

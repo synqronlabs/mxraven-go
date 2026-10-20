@@ -128,7 +128,7 @@ func New(opts ...Option) (*Client, error) {
 }
 
 // WithURL sets the client notification tier WebSocket URL, for example
-// "wss://nats.mxraven.com". Only the ws and wss schemes are accepted.
+// "wss://notifications.mxraven.com". Only the ws and wss schemes are accepted.
 func WithURL(url string) Option {
 	return func(cfg *config) error {
 		if strings.TrimSpace(url) == "" {

@@ -32,7 +32,7 @@ import (
 
 func main() {
 	client, err := feedback.New(
-		feedback.WithBaseURL("https://feedback.mxraven.com"),
+		feedback.WithBaseURL("https://api.mxraven.com"),
 		feedback.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
 	)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 
 func ExampleClient_Consume() {
 	client, err := notify.New(
-		notify.WithURL("wss://nats.mxraven.com"),
+		notify.WithURL("wss://notifications.mxraven.com"),
 		notify.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
 		notify.WithListener("0b0b0b0b-1111-2222-3333-444444444444"),
 	)
@@ -34,7 +34,7 @@ func ExampleClient_Consume() {
 
 func ExampleClient_Events() {
 	client, err := notify.New(
-		notify.WithURL("wss://nats.mxraven.com"),
+		notify.WithURL("wss://notifications.mxraven.com"),
 		notify.WithCredentials("mxr_tx_ab12cd34ef56", "your-api-key-secret"),
 		notify.WithListener("0b0b0b0b-1111-2222-3333-444444444444"),
 	)

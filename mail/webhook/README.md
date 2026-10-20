@@ -167,7 +167,7 @@ verdicts, the routing decision, and a time-limited handle to the raw message.
     {"name": "To", "value": "Support <support@example.com>"}
   ],
   "raw_email": {
-    "url": "https://raw.example.com/messages/33b97c39-6df9-45ce-b07b-83d81fa929bc.eml",
+    "url": "https://api.mxraven.com/messages/33b97c39-6df9-45ce-b07b-83d81fa929bc.eml",
     "token_type": "Bearer",
     "access_token": "<short-lived token>",
     "expires_at_utc": 1789303501,

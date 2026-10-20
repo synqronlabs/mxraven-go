@@ -58,7 +58,7 @@ func New(opts ...Option) (*Client, error) {
 }
 
 // WithBaseURL sets the feedback service base URL, for example
-// "https://feedback.mxraven.com". The value must not be empty.
+// "https://api.mxraven.com". The value must not be empty.
 func WithBaseURL(baseURL string) Option {
 	return func(cfg *config) error {
 		if strings.TrimSpace(baseURL) == "" {

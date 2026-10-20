@@ -6,7 +6,7 @@
 // submission looks like:
 //
 //	client, err := mail.New(
-//		mail.WithAddress("smtp.mxraven.com", 587),
+//		mail.WithAddress("smtp.mxraven.email", 587),
 //		mail.WithCredentials(username, secret),
 //	)
 //	if err != nil {
