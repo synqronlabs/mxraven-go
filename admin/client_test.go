@@ -3,8 +3,10 @@ package admin_test
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/synqronlabs/mxraven-go/admin"
@@ -34,18 +36,17 @@ func TestNewValidation(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "missing base URL and auth",
+			name:    "missing auth",
 			wantErr: true,
 		},
 		{
-			name:    "missing auth",
+			name:    "base URL only missing auth",
 			opts:    []admin.Option{admin.WithBaseURL("https://api.mxraven.com")},
 			wantErr: true,
 		},
 		{
-			name:    "missing base URL",
-			opts:    []admin.Option{admin.WithToken("secret")},
-			wantErr: true,
+			name: "token only uses default base URL",
+			opts: []admin.Option{admin.WithToken("secret")},
 		},
 		{
 			name:    "empty base URL",
@@ -83,6 +84,34 @@ func TestNewValidation(t *testing.T) {
 				t.Fatalf("New() unexpected error: %v", err)
 			}
 		})
+	}
+}
+
+func TestDefaultBaseURL(t *testing.T) {
+	var gotURL string
+	transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		gotURL = r.URL.String()
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(testTenantJSON)),
+			Request:    r,
+		}, nil
+	})
+
+	client, err := admin.New(
+		admin.WithToken("secret"),
+		admin.WithHTTPClient(&http.Client{Transport: transport}),
+	)
+	if err != nil {
+		t.Fatalf("New() error: %v", err)
+	}
+	if _, err := client.GetTenant(context.Background(), api.GetTenantParams{Slug: "acme"}); err != nil {
+		t.Fatalf("GetTenant() error: %v", err)
+	}
+	const want = admin.DefaultBaseURL + "/v2/tenants/acme"
+	if gotURL != want {
+		t.Errorf("request URL = %q, want %q", gotURL, want)
 	}
 }
 

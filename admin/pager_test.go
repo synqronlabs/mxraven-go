@@ -50,6 +50,33 @@ func TestPagerIteratesLazily(t *testing.T) {
 	}
 }
 
+func TestPagerPageMetadata(t *testing.T) {
+	pager, err := admin.NewPager(func(_ context.Context, _ string) (admin.Page[string], error) {
+		return admin.Page[string]{
+			Items:         []string{"a"},
+			NextToken:     "next",
+			PreviousToken: "previous",
+			LastToken:     "last",
+		}, nil
+	})
+	if err != nil {
+		t.Fatalf("NewPager() error: %v", err)
+	}
+	if !pager.Next(context.Background()) {
+		t.Fatal("Next() = false, want true")
+	}
+	page := pager.Page()
+	if !slices.Equal(page.Items, []string{"a"}) {
+		t.Errorf("Page().Items = %v, want [a]", page.Items)
+	}
+	if page.NextToken != "next" || page.PreviousToken != "previous" || page.LastToken != "last" {
+		t.Errorf("Page() = %+v, want next/previous/last tokens", page)
+	}
+	if pager.PreviousToken() != "previous" || pager.LastToken() != "last" {
+		t.Errorf("Pager tokens = %q/%q, want previous/last", pager.PreviousToken(), pager.LastToken())
+	}
+}
+
 func TestPagerStopsEarly(t *testing.T) {
 	var calls int
 	pager, err := admin.NewPager(func(_ context.Context, _ string) (admin.Page[int], error) {

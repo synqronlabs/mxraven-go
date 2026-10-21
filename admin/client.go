@@ -10,11 +10,18 @@ import (
 	"github.com/synqronlabs/mxraven-go/admin/api"
 )
 
+// DefaultBaseURL is the mxRaven control-plane API base URL.
+const DefaultBaseURL = "https://api.mxraven.com"
+
 // Client is a mxRaven control-plane v2 API client.
 //
 // It embeds the generated [api.Client], so every operation described by the
 // authoritative contract is available directly. Client and its embedded client
 // are safe for concurrent use by multiple goroutines.
+//
+// Most applications should use [Client.Workspace] and the tenant-bound
+// services it exposes. The embedded generated client remains available as an
+// escape hatch for operations that have not yet been wrapped.
 type Client struct {
 	*api.Client
 }
@@ -32,14 +39,15 @@ type config struct {
 
 // New creates a control-plane client.
 //
-// A base URL and an authentication source are required. The base URL should
-// include the scheme and host, for example "https://api.mxraven.com".
-// Configure authentication with [WithToken] or [WithTokenSource].
+// Authentication is required and must be configured with [WithToken] or
+// [WithTokenSource]. The base URL defaults to [DefaultBaseURL]; use
+// [WithBaseURL] to target a different environment.
 //
 // New returns an error if any option is invalid or if a required option is
 // missing.
 func New(opts ...Option) (*Client, error) {
 	cfg := config{
+		baseURL:    DefaultBaseURL,
 		httpClient: http.DefaultClient,
 		retry:      DefaultRetryPolicy,
 	}
@@ -49,7 +57,7 @@ func New(opts ...Option) (*Client, error) {
 		}
 	}
 	if cfg.baseURL == "" {
-		return nil, errors.New("admin: base URL is required (use WithBaseURL)")
+		return nil, errors.New("admin: base URL must not be empty")
 	}
 	if cfg.tokenSource == nil {
 		return nil, errors.New("admin: authentication is required (use WithToken or WithTokenSource)")
@@ -65,8 +73,9 @@ func New(opts ...Option) (*Client, error) {
 	return &Client{Client: client}, nil
 }
 
-// WithBaseURL sets the API base URL, for example
-// "https://api.mxraven.com". The value must not be empty.
+// WithBaseURL overrides the API base URL, for example
+// "https://staging.api.mxraven.com". When omitted, [DefaultBaseURL] is used.
+// The value must not be empty.
 func WithBaseURL(baseURL string) Option {
 	return func(cfg *config) error {
 		if strings.TrimSpace(baseURL) == "" {

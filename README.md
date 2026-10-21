@@ -33,11 +33,11 @@ go get github.com/synqronlabs/mxraven-go
 
 ## Control plane (`admin`)
 
-`admin` is a client for the mxRaven control-plane HTTP API. It embeds the
-generated [`admin/api`](./admin/api) client, so every operation described by the
-authoritative OpenAPI contract is available directly, plus cross-cutting
-helpers for authentication, retries, RFC 9457 problem extraction, and
-pagination.
+`admin` is a client for the mxRaven control-plane HTTP API. It provides
+tenant-bound services for every resource family and embeds the generated
+[`admin/api`](./admin/api) client, so every operation described by the
+authoritative OpenAPI contract remains available. Cross-cutting helpers cover
+authentication, retries, typed RFC 9457 errors, and lazy pagination.
 
 The generated transport is produced from a **tenant-only** subset of the
 contract. Platform-administrator, account self-service, billing, signup,
@@ -51,27 +51,38 @@ import (
 	"log"
 
 	"github.com/synqronlabs/mxraven-go/admin"
-	"github.com/synqronlabs/mxraven-go/admin/api"
 )
 
-client, err := admin.New(
-	admin.WithBaseURL("https://api.mxraven.com"),
-	admin.WithToken("your-access-token"),
-)
+client, err := admin.New(admin.WithToken("your-access-token"))
 if err != nil {
 	log.Fatal(err)
 }
 
-res, err := client.GetTenant(context.Background(), api.GetTenantParams{Slug: "acme"})
+ws := client.Workspace("acme")
+
+tenant, err := ws.Tenant.Get(context.Background())
 if err != nil {
-	log.Fatal(err) // transport or decode failure
+	log.Fatal(err) // transport, decode, or API error
 }
-if problem, ok := admin.ProblemFrom(res); ok {
-	log.Fatalf("get tenant: %s: %s", problem.Code, problem.Title)
-}
-tenant := res.(*api.TenantHeaders).Response
 fmt.Println(tenant.Slug, tenant.Status)
+
+for domain, err := range ws.Domains.List(context.Background(), admin.ListDomainsOptions{
+	Status: admin.DomainStatusVerified,
+}) {
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(domain.DomainName)
+}
 ```
+
+The base URL defaults to `admin.DefaultBaseURL`; use `WithBaseURL` for staging
+or self-hosted environments. `Workspace` exposes every tenant-bound resource
+family, including domains, listeners, suppressions, recipient sets, webhooks,
+identity providers, quotas, rate limits, and mail analytics. Facade-visible
+models and enums are re-exported as `admin` aliases, and list services provide
+both lazy iterators and `Pages` methods for explicit page control. The embedded
+generated client remains available for escape hatches.
 
 ### Authentication
 
@@ -88,28 +99,34 @@ admin.WithTokenSource(func(ctx context.Context, operation string) (string, error
 
 ### Problems and tracing
 
-The contract declares every expected error response, so the generated client
-decodes non-2xx responses as typed values rather than Go errors. `ProblemFrom`
-extracts the RFC 9457 problem document from any response value; branch on
-`Code`, never on `Title` or `Detail`. `TraceID` reads the `X-Trace-ID` header.
+The tenant-bound services convert non-2xx responses into `*admin.APIError`.
+Branch on `Code`, never on `Title` or `Detail`:
 
 ```go
-res, err := client.CreateDomain(ctx, req, params)
+domain, err := ws.Domains.Get(ctx, domainID)
 if err != nil {
+	var apiErr *admin.APIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.Code {
+		case "conflict":
+			return errAlreadyExists
+		}
+		log.Printf("trace=%s retry_after=%s", apiErr.TraceID, apiErr.RetryAfter)
+	}
 	return err
 }
-if problem, ok := admin.ProblemFrom(res); ok {
-	switch problem.Code {
-	case "conflict":
-		return errAlreadyExists
-	default:
-		return fmt.Errorf("create domain: %s: %s", problem.Code, problem.Title)
-	}
-}
-if trace, ok := admin.TraceID(res); ok {
-	log.Printf("trace %s", trace)
-}
 ```
+
+For direct calls to the embedded generated client, `admin.Do` and `admin.Check`
+unwrap generated results and convert problem responses to the same typed error:
+
+```go
+tenant, err := admin.Do[admin.Tenant](client.GetTenant(ctx, params))
+err = admin.Check(client.DeleteDomain(ctx, params))
+```
+
+`ProblemFrom` and `TraceID` remain available for inspecting generated response
+values directly.
 
 ### Rate limits and retries
 
@@ -137,44 +154,32 @@ admin.WithRetry(admin.RetryPolicy{MaxAttempts: 1})
 
 ### Pagination
 
-List operations return a page and an opaque `X-Next-Page-Token`. Use `Pager` to
-iterate lazily without risking rate limits; stop at any point and no further
-pages are requested. `NextPageToken`, `PreviousPageToken`, and `LastPageToken`
-read the corresponding headers for one-off paging.
+List operations return lazy `iter.Seq2` sequences. Pages are fetched only as the
+sequence is consumed; stopping early stops further requests.
 
 ```go
-fetch := func(ctx context.Context, token string) (admin.Page[api.Listener], error) {
-	params := api.ListListenersParams{Slug: "acme"}
-	if token != "" {
-		params.PageToken = api.OptString{Value: token, Set: true}
-	}
-	res, err := client.ListListeners(ctx, params)
+for listener, err := range ws.Listeners.List(ctx, admin.ListListenersOptions{
+	ListenerType: admin.ListenerTypeMta,
+}) {
 	if err != nil {
-		return admin.Page[api.Listener]{}, err
+		return err
 	}
-	if problem, ok := admin.ProblemFrom(res); ok {
-		return admin.Page[api.Listener]{}, fmt.Errorf("list listeners: %s", problem.Code)
-	}
-	page := res.(*api.ListListenersOKHeaders)
-	next, _ := admin.NextPageToken(res)
-	return admin.Page[api.Listener]{Items: page.Response, NextToken: next}, nil
-}
-
-pager, err := admin.NewPager(fetch)
-if err != nil {
-	return err
-}
-for pager.Next(ctx) {
-	for _, listener := range pager.Items() {
-		fmt.Println(listener.ID)
-	}
-}
-if err := pager.Err(); err != nil {
-	return err
+	fmt.Println(listener.ID)
 }
 ```
 
-See the [`admin` README](./admin/README.md) for the full option list.
+Use `admin.Take` or `admin.Collect` when a slice is more convenient:
+
+```go
+firstTen, err := admin.Take(ws.Listeners.List(ctx, admin.ListListenersOptions{}), 10)
+all, err := admin.Collect(ws.Domains.List(ctx, admin.ListDomainsOptions{}))
+```
+
+`Pager`, `NextPageToken`, `PreviousPageToken`, and `LastPageToken` remain
+available for callers that need explicit page control over generated responses.
+
+See the [`admin` README](./admin/README.md) for the full option list, list
+filters, and listener payload helpers.
 
 ## Mail submission (`mail`)
 
@@ -400,13 +405,14 @@ retention, and options.
 ```text
 admin/                Control-plane SDK
   api/                Generated ogen transport (do not edit)
-  *.go                Client, retries, problems, pagination
+  *.go                Client, workspace services, errors, retries, pagination
 mail/                 SMTP submission SDK
   webhook/            Webhook verification and decoding
   feedback/           Spam/ham learning and one-click unsubscribe
   notify/             Client notification stream over NATS
   mime/               Inbound RFC 5322 / MIME parsing
 tools/openapifilter/  Derives the tenant-only OpenAPI contract for generation
+tools/adminfacade/    Generates the ergonomic workspace service facade
 ```
 
 `admin/api` is generated and must not be edited by hand. The authoritative
