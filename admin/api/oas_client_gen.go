@@ -56,7 +56,8 @@ type Invoker interface {
 	CreateAPIKey(ctx context.Context, params CreateAPIKeyParams) (CreateAPIKeyRes, error)
 	// CreateAutoReplyTemplate invokes createAutoReplyTemplate operation.
 	//
-	// Template content is accepted for validation and storage but is never returned by the API.
+	// Template content is accepted for validation and storage. The response summarises it; read the stored
+	// result with `getAutoReplyTemplateContent`.
 	//
 	// POST /v2/tenants/{slug}/auto-reply-templates
 	CreateAutoReplyTemplate(ctx context.Context, request *CreateAutoReplyTemplateRequest, params CreateAutoReplyTemplateParams) (CreateAutoReplyTemplateRes, error)
@@ -295,16 +296,27 @@ type Invoker interface {
 	DeleteWebhookEndpoint(ctx context.Context, params DeleteWebhookEndpointParams) (DeleteWebhookEndpointRes, error)
 	// GetAutoReplyTemplate invokes getAutoReplyTemplate operation.
 	//
-	// Template content is always masked.
+	// Template content is summarised, never returned; read stored content with
+	// `getAutoReplyTemplateContent`.
 	//
 	// GET /v2/tenants/{slug}/auto-reply-templates/{template_id}
 	GetAutoReplyTemplate(ctx context.Context, params GetAutoReplyTemplateParams) (GetAutoReplyTemplateRes, error)
 	// GetAutoReplyTemplateByRef invokes getAutoReplyTemplateByRef operation.
 	//
-	// Template content is always masked.
+	// Template content is summarised, never returned; read stored content with
+	// `getAutoReplyTemplateContent`.
 	//
 	// GET /v2/tenants/{slug}/auto-reply-templates/ref/{template_ref}
 	GetAutoReplyTemplateByRef(ctx context.Context, params GetAutoReplyTemplateByRefParams) (GetAutoReplyTemplateByRefRes, error)
+	// GetAutoReplyTemplateContent invokes getAutoReplyTemplateContent operation.
+	//
+	// Returns the stored subject, bodies, and additional headers exactly as the listener will render them,
+	// including the authoring-time content policy applied to the HTML body. Template content is
+	// configuration rather than a credential, so a principal holding `auto_reply_templates.read` may read
+	// it. Responses are marked `no-store`.
+	//
+	// GET /v2/tenants/{slug}/auto-reply-templates/{template_id}/content
+	GetAutoReplyTemplateContent(ctx context.Context, params GetAutoReplyTemplateContentParams) (GetAutoReplyTemplateContentRes, error)
 	// GetDomain invokes getDomain operation.
 	//
 	// Get a tenant domain and its required DNS records.
@@ -569,7 +581,7 @@ type Invoker interface {
 	// ListAutoReplyTemplates invokes listAutoReplyTemplates operation.
 	//
 	// Results are ordered by case-insensitive template reference and then template ID. Template content is
-	// always masked.
+	// summarised, never returned; read stored content with `getAutoReplyTemplateContent`.
 	//
 	// GET /v2/tenants/{slug}/auto-reply-templates
 	ListAutoReplyTemplates(ctx context.Context, params ListAutoReplyTemplatesParams) (ListAutoReplyTemplatesRes, error)
@@ -773,8 +785,8 @@ type Invoker interface {
 	SetWebhookEndpointActive(ctx context.Context, request *SetIntegrationActiveRequest, params SetWebhookEndpointActiveParams) (SetWebhookEndpointActiveRes, error)
 	// UpdateAutoReplyTemplate invokes updateAutoReplyTemplate operation.
 	//
-	// Replaces all writable fields except the immutable template reference. Stored content remains masked
-	// in the response.
+	// Replaces all writable fields except the immutable template reference. The response summarises the
+	// stored result; read it with `getAutoReplyTemplateContent`.
 	//
 	// PUT /v2/tenants/{slug}/auto-reply-templates/{template_id}
 	UpdateAutoReplyTemplate(ctx context.Context, request *UpdateAutoReplyTemplateRequest, params UpdateAutoReplyTemplateParams) (UpdateAutoReplyTemplateRes, error)
@@ -1498,7 +1510,8 @@ func (c *Client) sendCreateAPIKey(ctx context.Context, params CreateAPIKeyParams
 
 // CreateAutoReplyTemplate invokes createAutoReplyTemplate operation.
 //
-// Template content is accepted for validation and storage but is never returned by the API.
+// Template content is accepted for validation and storage. The response summarises it; read the stored
+// result with `getAutoReplyTemplateContent`.
 //
 // POST /v2/tenants/{slug}/auto-reply-templates
 func (c *Client) CreateAutoReplyTemplate(ctx context.Context, request *CreateAutoReplyTemplateRequest, params CreateAutoReplyTemplateParams) (CreateAutoReplyTemplateRes, error) {
@@ -5948,7 +5961,8 @@ func (c *Client) sendDeleteWebhookEndpoint(ctx context.Context, params DeleteWeb
 
 // GetAutoReplyTemplate invokes getAutoReplyTemplate operation.
 //
-// Template content is always masked.
+// Template content is summarised, never returned; read stored content with
+// `getAutoReplyTemplateContent`.
 //
 // GET /v2/tenants/{slug}/auto-reply-templates/{template_id}
 func (c *Client) GetAutoReplyTemplate(ctx context.Context, params GetAutoReplyTemplateParams) (GetAutoReplyTemplateRes, error) {
@@ -6064,7 +6078,8 @@ func (c *Client) sendGetAutoReplyTemplate(ctx context.Context, params GetAutoRep
 
 // GetAutoReplyTemplateByRef invokes getAutoReplyTemplateByRef operation.
 //
-// Template content is always masked.
+// Template content is summarised, never returned; read stored content with
+// `getAutoReplyTemplateContent`.
 //
 // GET /v2/tenants/{slug}/auto-reply-templates/ref/{template_ref}
 func (c *Client) GetAutoReplyTemplateByRef(ctx context.Context, params GetAutoReplyTemplateByRefParams) (GetAutoReplyTemplateByRefRes, error) {
@@ -6171,6 +6186,126 @@ func (c *Client) sendGetAutoReplyTemplateByRef(ctx context.Context, params GetAu
 	}()
 
 	result, err := decodeGetAutoReplyTemplateByRefResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GetAutoReplyTemplateContent invokes getAutoReplyTemplateContent operation.
+//
+// Returns the stored subject, bodies, and additional headers exactly as the listener will render them,
+// including the authoring-time content policy applied to the HTML body. Template content is
+// configuration rather than a credential, so a principal holding `auto_reply_templates.read` may read
+// it. Responses are marked `no-store`.
+//
+// GET /v2/tenants/{slug}/auto-reply-templates/{template_id}/content
+func (c *Client) GetAutoReplyTemplateContent(ctx context.Context, params GetAutoReplyTemplateContentParams) (GetAutoReplyTemplateContentRes, error) {
+	res, err := c.sendGetAutoReplyTemplateContent(ctx, params)
+	return res, err
+}
+
+func (c *Client) sendGetAutoReplyTemplateContent(ctx context.Context, params GetAutoReplyTemplateContentParams) (res GetAutoReplyTemplateContentRes, err error) {
+
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [5]string
+	pathParts[0] = "/v2/tenants/"
+	{
+		// Encode "slug" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "slug",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			if unwrapped := string(params.Slug); true {
+				return e.EncodeValue(conv.StringToString(unwrapped))
+			}
+			return nil
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[1] = encoded
+	}
+	pathParts[2] = "/auto-reply-templates/"
+	{
+		// Encode "template_id" parameter.
+		e := uri.NewPathEncoder(uri.PathEncoderConfig{
+			Param:   "template_id",
+			Style:   uri.PathStyleSimple,
+			Explode: false,
+		})
+		if err := func() error {
+			return e.EncodeValue(conv.UUIDToString(params.TemplateID))
+		}(); err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		encoded, err := e.Result()
+		if err != nil {
+			return res, errors.Wrap(err, "encode path")
+		}
+		pathParts[3] = encoded
+	}
+	pathParts[4] = "/content"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+
+			switch err := c.securityBearerAuth(ctx, GetAutoReplyTemplateContentOperation, r); {
+			case err == nil: // if NO error
+				satisfied[0] |= 1 << 0
+			case errors.Is(err, ogenerrors.ErrSkipClientSecurity):
+				// Skip this security.
+			default:
+				return res, errors.Wrap(err, "security \"BearerAuth\"")
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			return res, ogenerrors.ErrSecurityRequirementIsNotSatisfied
+		}
+	}
+
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer func() {
+		// Drain the body to EOF before closing, so the underlying
+		// connection can be reused by the Transport regardless of the
+		// response status code. See https://github.com/ogen-go/ogen/issues/1670.
+		_, _ = io.Copy(io.Discard, body)
+		_ = body.Close()
+	}()
+
+	result, err := decodeGetAutoReplyTemplateContentResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}
@@ -10681,7 +10816,7 @@ func (c *Client) sendListAuditLog(ctx context.Context, params ListAuditLogParams
 // ListAutoReplyTemplates invokes listAutoReplyTemplates operation.
 //
 // Results are ordered by case-insensitive template reference and then template ID. Template content is
-// always masked.
+// summarised, never returned; read stored content with `getAutoReplyTemplateContent`.
 //
 // GET /v2/tenants/{slug}/auto-reply-templates
 func (c *Client) ListAutoReplyTemplates(ctx context.Context, params ListAutoReplyTemplatesParams) (ListAutoReplyTemplatesRes, error) {
@@ -15557,8 +15692,8 @@ func (c *Client) sendSetWebhookEndpointActive(ctx context.Context, request *SetI
 
 // UpdateAutoReplyTemplate invokes updateAutoReplyTemplate operation.
 //
-// Replaces all writable fields except the immutable template reference. Stored content remains masked
-// in the response.
+// Replaces all writable fields except the immutable template reference. The response summarises the
+// stored result; read it with `getAutoReplyTemplateContent`.
 //
 // PUT /v2/tenants/{slug}/auto-reply-templates/{template_id}
 func (c *Client) UpdateAutoReplyTemplate(ctx context.Context, request *UpdateAutoReplyTemplateRequest, params UpdateAutoReplyTemplateParams) (UpdateAutoReplyTemplateRes, error) {

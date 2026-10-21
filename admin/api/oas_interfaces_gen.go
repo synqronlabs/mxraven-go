@@ -181,6 +181,10 @@ type GetAutoReplyTemplateByRefRes interface {
 	getAutoReplyTemplateByRefRes()
 }
 
+type GetAutoReplyTemplateContentRes interface {
+	getAutoReplyTemplateContentRes()
+}
+
 type GetAutoReplyTemplateRes interface {
 	getAutoReplyTemplateRes()
 }

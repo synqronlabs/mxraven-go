@@ -329,6 +329,14 @@ type GetAutoReplyTemplateByRefParams struct {
 	TemplateRef string
 }
 
+// GetAutoReplyTemplateContentParams is parameters of getAutoReplyTemplateContent operation.
+type GetAutoReplyTemplateContentParams struct {
+	// Tenant slug.
+	Slug TenantSlug
+	// Auto-reply template identifier.
+	TemplateID uuid.UUID
+}
+
 // GetDomainParams is parameters of getDomain operation.
 type GetDomainParams struct {
 	// Tenant slug.

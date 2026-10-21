@@ -66,6 +66,7 @@ var operationRolesBearerAuth = map[string][]string{
 	DeleteWebhookEndpointOperation:                              []string{},
 	GetAutoReplyTemplateOperation:                               []string{},
 	GetAutoReplyTemplateByRefOperation:                          []string{},
+	GetAutoReplyTemplateContentOperation:                        []string{},
 	GetDomainOperation:                                          []string{},
 	GetInboundRouteOperation:                                    []string{},
 	GetListenerOperation:                                        []string{},

@@ -52,6 +52,7 @@ const (
 	DeleteWebhookEndpointOperation                              OperationName = "DeleteWebhookEndpoint"
 	GetAutoReplyTemplateOperation                               OperationName = "GetAutoReplyTemplate"
 	GetAutoReplyTemplateByRefOperation                          OperationName = "GetAutoReplyTemplateByRef"
+	GetAutoReplyTemplateContentOperation                        OperationName = "GetAutoReplyTemplateContent"
 	GetDomainOperation                                          OperationName = "GetDomain"
 	GetInboundRouteOperation                                    OperationName = "GetInboundRoute"
 	GetListenerOperation                                        OperationName = "GetListener"

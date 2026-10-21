@@ -610,6 +610,97 @@ func (s *AutoReplyTemplate) SetSenderReadiness(val AutoReplySenderReadiness) {
 	s.SenderReadiness = val
 }
 
+// Stored template content, as the listener renders it. Tenant-scoped and readable with
+// `auto_reply_templates.read`; it is configuration, not a credential, and is returned only by
+// `getAutoReplyTemplateContent`.
+// Ref: #/AutoReplyTemplateContent
+type AutoReplyTemplateContent struct {
+	Subject  string    `json:"subject"`
+	TextBody NilString `json:"text_body"`
+	// The stored HTML body after the authoring-time content policy.
+	HTMLBody NilString                 `json:"html_body"`
+	Headers  []AutoReplyTemplateHeader `json:"headers"`
+}
+
+// GetSubject returns the value of Subject.
+func (s *AutoReplyTemplateContent) GetSubject() string {
+	return s.Subject
+}
+
+// GetTextBody returns the value of TextBody.
+func (s *AutoReplyTemplateContent) GetTextBody() NilString {
+	return s.TextBody
+}
+
+// GetHTMLBody returns the value of HTMLBody.
+func (s *AutoReplyTemplateContent) GetHTMLBody() NilString {
+	return s.HTMLBody
+}
+
+// GetHeaders returns the value of Headers.
+func (s *AutoReplyTemplateContent) GetHeaders() []AutoReplyTemplateHeader {
+	return s.Headers
+}
+
+// SetSubject sets the value of Subject.
+func (s *AutoReplyTemplateContent) SetSubject(val string) {
+	s.Subject = val
+}
+
+// SetTextBody sets the value of TextBody.
+func (s *AutoReplyTemplateContent) SetTextBody(val NilString) {
+	s.TextBody = val
+}
+
+// SetHTMLBody sets the value of HTMLBody.
+func (s *AutoReplyTemplateContent) SetHTMLBody(val NilString) {
+	s.HTMLBody = val
+}
+
+// SetHeaders sets the value of Headers.
+func (s *AutoReplyTemplateContent) SetHeaders(val []AutoReplyTemplateHeader) {
+	s.Headers = val
+}
+
+// AutoReplyTemplateContentHeaders wraps AutoReplyTemplateContent with response headers.
+type AutoReplyTemplateContentHeaders struct {
+	CacheControl OptString
+	XTraceID     OptString
+	Response     AutoReplyTemplateContent
+}
+
+// GetCacheControl returns the value of CacheControl.
+func (s *AutoReplyTemplateContentHeaders) GetCacheControl() OptString {
+	return s.CacheControl
+}
+
+// GetXTraceID returns the value of XTraceID.
+func (s *AutoReplyTemplateContentHeaders) GetXTraceID() OptString {
+	return s.XTraceID
+}
+
+// GetResponse returns the value of Response.
+func (s *AutoReplyTemplateContentHeaders) GetResponse() AutoReplyTemplateContent {
+	return s.Response
+}
+
+// SetCacheControl sets the value of CacheControl.
+func (s *AutoReplyTemplateContentHeaders) SetCacheControl(val OptString) {
+	s.CacheControl = val
+}
+
+// SetXTraceID sets the value of XTraceID.
+func (s *AutoReplyTemplateContentHeaders) SetXTraceID(val OptString) {
+	s.XTraceID = val
+}
+
+// SetResponse sets the value of Response.
+func (s *AutoReplyTemplateContentHeaders) SetResponse(val AutoReplyTemplateContent) {
+	s.Response = val
+}
+
+func (*AutoReplyTemplateContentHeaders) getAutoReplyTemplateContentRes() {}
+
 // Ref: #/AutoReplyTemplateContentSummary
 type AutoReplyTemplateContentSummary struct {
 	Subject     MaskedTemplateField `json:"subject"`
@@ -836,6 +927,7 @@ func (*BadRequestHeaders) deleteTenantMTARateLimitOverrideRes()                 
 func (*BadRequestHeaders) deleteTenantSuppressionRes()                            {}
 func (*BadRequestHeaders) deleteWebhookEndpointRes()                              {}
 func (*BadRequestHeaders) getAutoReplyTemplateByRefRes()                          {}
+func (*BadRequestHeaders) getAutoReplyTemplateContentRes()                        {}
 func (*BadRequestHeaders) getAutoReplyTemplateRes()                               {}
 func (*BadRequestHeaders) getDomainRes()                                          {}
 func (*BadRequestHeaders) getInboundRouteRes()                                    {}
@@ -1139,10 +1231,11 @@ type CreateAutoReplyTemplateRequest struct {
 	FromAddress string       `json:"from_address"`
 	Subject     string       `json:"subject"`
 	TextBody    OptNilString `json:"text_body"`
-	// HTML reply body. Normalised on create by an authoring-time content policy that removes script,
-	// style, form, iframe, object, and embed elements, event-handler attributes, non-HTTP URL schemes, and
-	// inline CSS properties outside the allowlist. Rejected with validation_failed when the policy would
-	// alter a template action.
+	// HTML reply body, stored as an HTML fragment. Normalised on create by an authoring-time content
+	// policy: elements and attributes outside the policy allowlist are removed, URLs must be relative or
+	// use the http, https, or mailto scheme, links receive rel="nofollow", and inline CSS is limited to
+	// the allowed properties. Rejected with validation_failed when the policy would alter a template
+	// action.
 	HTMLBody OptNilString              `json:"html_body"`
 	Headers  []AutoReplyTemplateHeader `json:"headers"`
 }
@@ -4958,6 +5051,7 @@ func (*ForbiddenHeaders) deleteTenantMTARateLimitOverrideRes()                  
 func (*ForbiddenHeaders) deleteTenantSuppressionRes()                            {}
 func (*ForbiddenHeaders) deleteWebhookEndpointRes()                              {}
 func (*ForbiddenHeaders) getAutoReplyTemplateByRefRes()                          {}
+func (*ForbiddenHeaders) getAutoReplyTemplateContentRes()                        {}
 func (*ForbiddenHeaders) getAutoReplyTemplateRes()                               {}
 func (*ForbiddenHeaders) getDomainRes()                                          {}
 func (*ForbiddenHeaders) getInboundRouteRes()                                    {}
@@ -5964,6 +6058,7 @@ func (*InternalServerErrorHeaders) deleteTenantMTARateLimitOverrideRes()        
 func (*InternalServerErrorHeaders) deleteTenantSuppressionRes()                            {}
 func (*InternalServerErrorHeaders) deleteWebhookEndpointRes()                              {}
 func (*InternalServerErrorHeaders) getAutoReplyTemplateByRefRes()                          {}
+func (*InternalServerErrorHeaders) getAutoReplyTemplateContentRes()                        {}
 func (*InternalServerErrorHeaders) getAutoReplyTemplateRes()                               {}
 func (*InternalServerErrorHeaders) getDomainRes()                                          {}
 func (*InternalServerErrorHeaders) getInboundRouteRes()                                    {}
@@ -12328,6 +12423,7 @@ func (*NotFoundHeaders) deleteTenantMTARateLimitOverrideRes()                   
 func (*NotFoundHeaders) deleteTenantSuppressionRes()                            {}
 func (*NotFoundHeaders) deleteWebhookEndpointRes()                              {}
 func (*NotFoundHeaders) getAutoReplyTemplateByRefRes()                          {}
+func (*NotFoundHeaders) getAutoReplyTemplateContentRes()                        {}
 func (*NotFoundHeaders) getAutoReplyTemplateRes()                               {}
 func (*NotFoundHeaders) getDomainRes()                                          {}
 func (*NotFoundHeaders) getInboundRouteRes()                                    {}
@@ -16837,6 +16933,7 @@ func (*ServiceUnavailableHeaders) deleteTenantMTARateLimitOverrideRes()         
 func (*ServiceUnavailableHeaders) deleteTenantSuppressionRes()                            {}
 func (*ServiceUnavailableHeaders) deleteWebhookEndpointRes()                              {}
 func (*ServiceUnavailableHeaders) getAutoReplyTemplateByRefRes()                          {}
+func (*ServiceUnavailableHeaders) getAutoReplyTemplateContentRes()                        {}
 func (*ServiceUnavailableHeaders) getAutoReplyTemplateRes()                               {}
 func (*ServiceUnavailableHeaders) getDomainRes()                                          {}
 func (*ServiceUnavailableHeaders) getInboundRouteRes()                                    {}
@@ -18862,9 +18959,13 @@ func (s *TenantStatus) UnmarshalText(data []byte) error {
 
 // Ref: #/TenantSuppression
 type TenantSuppression struct {
-	TenantID     uuid.UUID            `json:"tenant_id"`
-	EmailAddress string               `json:"email_address"`
-	Reason       OptSuppressionReason `json:"reason"`
+	TenantID     uuid.UUID `json:"tenant_id"`
+	EmailAddress string    `json:"email_address"`
+	// Provider-canonical mailbox identity used for matching. Provider-equivalent addresses (for example
+	// Gmail dot or subaddress variants and domain aliases) share one suppression and the same canonical
+	// value.
+	CanonicalEmailAddress string               `json:"canonical_email_address"`
+	Reason                OptSuppressionReason `json:"reason"`
 	// True when the suppression was written by mxRaven feedback rather than a customer. System-managed
 	// suppressions cannot be modified or deleted through the tenant API.
 	SystemManaged OptBool `json:"system_managed"`
@@ -18885,6 +18986,11 @@ func (s *TenantSuppression) GetTenantID() uuid.UUID {
 // GetEmailAddress returns the value of EmailAddress.
 func (s *TenantSuppression) GetEmailAddress() string {
 	return s.EmailAddress
+}
+
+// GetCanonicalEmailAddress returns the value of CanonicalEmailAddress.
+func (s *TenantSuppression) GetCanonicalEmailAddress() string {
+	return s.CanonicalEmailAddress
 }
 
 // GetReason returns the value of Reason.
@@ -18930,6 +19036,11 @@ func (s *TenantSuppression) SetTenantID(val uuid.UUID) {
 // SetEmailAddress sets the value of EmailAddress.
 func (s *TenantSuppression) SetEmailAddress(val string) {
 	s.EmailAddress = val
+}
+
+// SetCanonicalEmailAddress sets the value of CanonicalEmailAddress.
+func (s *TenantSuppression) SetCanonicalEmailAddress(val string) {
+	s.CanonicalEmailAddress = val
 }
 
 // SetReason sets the value of Reason.
@@ -19088,6 +19199,7 @@ func (*TooManyRequestsHeaders) deleteTenantMTARateLimitOverrideRes()            
 func (*TooManyRequestsHeaders) deleteTenantSuppressionRes()                            {}
 func (*TooManyRequestsHeaders) deleteWebhookEndpointRes()                              {}
 func (*TooManyRequestsHeaders) getAutoReplyTemplateByRefRes()                          {}
+func (*TooManyRequestsHeaders) getAutoReplyTemplateContentRes()                        {}
 func (*TooManyRequestsHeaders) getAutoReplyTemplateRes()                               {}
 func (*TooManyRequestsHeaders) getDomainRes()                                          {}
 func (*TooManyRequestsHeaders) getInboundRouteRes()                                    {}
@@ -19252,6 +19364,7 @@ func (*UnauthorizedHeaders) deleteTenantMTARateLimitOverrideRes()               
 func (*UnauthorizedHeaders) deleteTenantSuppressionRes()                            {}
 func (*UnauthorizedHeaders) deleteWebhookEndpointRes()                              {}
 func (*UnauthorizedHeaders) getAutoReplyTemplateByRefRes()                          {}
+func (*UnauthorizedHeaders) getAutoReplyTemplateContentRes()                        {}
 func (*UnauthorizedHeaders) getAutoReplyTemplateRes()                               {}
 func (*UnauthorizedHeaders) getDomainRes()                                          {}
 func (*UnauthorizedHeaders) getInboundRouteRes()                                    {}
@@ -19504,10 +19617,11 @@ type UpdateAutoReplyTemplateRequest struct {
 	FromAddress string    `json:"from_address"`
 	Subject     string    `json:"subject"`
 	TextBody    NilString `json:"text_body"`
-	// HTML reply body. Normalised on update by an authoring-time content policy that removes script,
-	// style, form, iframe, object, and embed elements, event-handler attributes, non-HTTP URL schemes, and
-	// inline CSS properties outside the allowlist. Rejected with validation_failed when the policy would
-	// alter a template action.
+	// HTML reply body, stored as an HTML fragment. Normalised on update by an authoring-time content
+	// policy: elements and attributes outside the policy allowlist are removed, URLs must be relative or
+	// use the http, https, or mailto scheme, links receive rel="nofollow", and inline CSS is limited to
+	// the allowed properties. Rejected with validation_failed when the policy would alter a template
+	// action.
 	HTMLBody NilString                 `json:"html_body"`
 	Headers  []AutoReplyTemplateHeader `json:"headers"`
 }

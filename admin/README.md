@@ -62,7 +62,9 @@ The SDK covers tenant-bound administration only. Platform-administrator,
 account self-service, billing, signup, and authentication operations are
 intentionally excluded, along with global/platform suppressions, platform
 resources, and platform commercial endpoints. The generated package currently
-exposes 126 operations, including the per-listener client notification setting at
+exposes 127 operations, including stored auto-reply template content at
+`/v2/tenants/{slug}/auto-reply-templates/{template_id}/content` and the per-listener
+client notification setting at
 `/v2/tenants/{slug}/listeners/{listener_id}/notifications`.
 
 ## Authentication
