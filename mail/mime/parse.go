@@ -11,6 +11,8 @@ import (
 	"net/mail"
 	"strings"
 	"time"
+
+	ravenmail "github.com/synqronlabs/raven/mail"
 )
 
 // Parsing limits protect against unbounded input from untrusted messages.
@@ -443,18 +445,20 @@ func parseDate(value string) time.Time {
 	return parsed
 }
 
-// parseAddressList parses an address header into its mailboxes. A value the
-// standard parser rejects is split on top-level commas and parsed piecewise,
-// falling back to the raw text for a malformed entry.
+// parseAddressList parses an address header into its mailboxes. The whole
+// header is parsed first so groups, comments, and obsolete list syntax are
+// handled consistently. A value the parser rejects falls back to parsing each
+// top-level comma-separated piece on its own, so one malformed entry does not
+// discard the rest of the header.
 func parseAddressList(value string) []Address {
 	value = strings.TrimSpace(value)
 	if value == "" {
 		return nil
 	}
-	if list, err := addressParser.ParseList(value); err == nil {
+	if list, err := ravenmail.ParseAddressList(value); err == nil {
 		addresses := make([]Address, 0, len(list))
-		for _, parsed := range list {
-			addresses = append(addresses, Address{Name: parsed.Name, Address: parsed.Address})
+		for _, mailbox := range list {
+			addresses = append(addresses, Address{Name: mailbox.DisplayName, Address: mailbox.String()})
 		}
 		return addresses
 	}
@@ -472,8 +476,8 @@ func parseAddressList(value string) []Address {
 
 // parseOneAddress parses a single mailbox, falling back to the raw entry.
 func parseOneAddress(piece string) Address {
-	if parsed, err := addressParser.Parse(piece); err == nil {
-		return Address{Name: parsed.Name, Address: parsed.Address}
+	if parsed, err := ravenmail.ParseAddress(piece); err == nil {
+		return Address{Name: parsed.DisplayName, Address: parsed.String()}
 	}
 	if open := strings.LastIndexByte(piece, '<'); open >= 0 {
 		if close := strings.LastIndexByte(piece, '>'); close > open {
@@ -529,6 +533,3 @@ func splitAddressList(value string) []string {
 	pieces = append(pieces, current.String())
 	return pieces
 }
-
-// addressParser decodes RFC 2047 display names in address headers.
-var addressParser = &mail.AddressParser{WordDecoder: &wordDecoder}

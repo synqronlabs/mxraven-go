@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/nats-io/nats.go v1.52.0
 	github.com/ogen-go/ogen v1.24.0
-	github.com/synqronlabs/raven v1.6.1
+	github.com/synqronlabs/raven v1.10.0
 	golang.org/x/text v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
 )

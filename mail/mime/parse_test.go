@@ -309,6 +309,43 @@ func TestParseQuotedCommasInDisplayNames(t *testing.T) {
 	}
 }
 
+func TestParseAddressGroups(t *testing.T) {
+	raw := "To: Friends: a@example.com, \"Doe, John\" <john@example.com>;\r\n" +
+		"Cc: undisclosed-recipients:;\r\n" +
+		"Content-Type: text/plain\r\n" +
+		"\r\n" +
+		"body"
+	email, err := ParseEmail([]byte(raw))
+	if err != nil {
+		t.Fatalf("ParseEmail() error = %v", err)
+	}
+	wantTo := []Address{
+		{Address: "a@example.com"},
+		{Name: "Doe, John", Address: "john@example.com"},
+	}
+	if !addressesEqual(email.To, wantTo) {
+		t.Errorf("To = %+v, want %+v", email.To, wantTo)
+	}
+	if len(email.Cc) != 0 {
+		t.Errorf("Cc = %+v, want no addresses", email.Cc)
+	}
+}
+
+func TestParseObsoleteAddressListFallsBack(t *testing.T) {
+	raw := "To: a@example.com,, b@example.com,\r\n" +
+		"Content-Type: text/plain\r\n" +
+		"\r\n" +
+		"body"
+	email, err := ParseEmail([]byte(raw))
+	if err != nil {
+		t.Fatalf("ParseEmail() error = %v", err)
+	}
+	want := []Address{{Address: "a@example.com"}, {Address: "b@example.com"}}
+	if !addressesEqual(email.To, want) {
+		t.Errorf("To = %+v, want %+v", email.To, want)
+	}
+}
+
 func TestParseMessageRFC822AsAttachment(t *testing.T) {
 	raw := "Content-Type: message/rfc822\r\n" +
 		"\r\n" +
