@@ -89,6 +89,10 @@ type InboundEmail struct {
 	TenantID string `json:"tenant_id"`
 	// ListenerID is the listener that accepted the message.
 	ListenerID string `json:"listener_id"`
+	// MessageRef is the mxRaven message reference. For an outbound listener it
+	// is the value the submission reply reported as message_ref=, so an event
+	// can be joined to the send that produced it.
+	MessageRef string `json:"message_ref,omitempty"`
 	// Attempt is the delivery attempt number, starting at 1.
 	Attempt uint64 `json:"attempt"`
 	// AcceptedAtUTC is the Unix time, in seconds, when mxRaven accepted the
@@ -203,6 +207,9 @@ type DeliveryStatus struct {
 	TenantID string `json:"tenant_id"`
 	// ListenerID is the source listener.
 	ListenerID string `json:"listener_id"`
+	// MessageRef is the mxRaven message reference of the message this attempt
+	// belongs to.
+	MessageRef string `json:"message_ref,omitempty"`
 	// Status is the delivery outcome.
 	Status StatusOutcome `json:"status"`
 	// Attempt is the delivery attempt number, starting at 1.
@@ -241,6 +248,9 @@ type StorageStatus struct {
 	TenantID string `json:"tenant_id,omitempty"`
 	// ListenerID is the source listener.
 	ListenerID string `json:"listener_id,omitempty"`
+	// MessageRef is the mxRaven message reference of the message this attempt
+	// belongs to.
+	MessageRef string `json:"message_ref,omitempty"`
 	// Status is the storage outcome.
 	Status StatusOutcome `json:"status"`
 	// Attempt is the delivery attempt number, starting at 1.

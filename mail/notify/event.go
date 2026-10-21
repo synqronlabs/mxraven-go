@@ -65,6 +65,10 @@ type AttemptEvent struct {
 	TenantID string `json:"tenant_id,omitempty"`
 	// ListenerID is the source listener.
 	ListenerID string `json:"listener_id,omitempty"`
+	// MessageRef is the mxRaven message reference of the message this attempt
+	// belongs to. It joins attempts and acceptance events for the same message,
+	// including every recipient a single send fanned out to.
+	MessageRef string `json:"message_ref,omitempty"`
 	// CorrelationID is the TaskID of the accepted event for the message this
 	// attempt belongs to, when one was recorded.
 	CorrelationID string `json:"correlation_id,omitempty"`

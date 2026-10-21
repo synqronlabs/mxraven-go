@@ -128,9 +128,17 @@ Both event kinds arrive on the listener's single durable consumer.
 ### Accepted events
 
 An accepted event is the same payload mxRaven posts to a webhook endpoint, so it
-is decoded into `*webhook.InboundEmail`: task and listener identifiers,
-acceptance and occurrence timestamps, the routing decision, verdicts, the SMTP
-envelope, the parsed message summary and headers, and raw-message access.
+is decoded into `*webhook.InboundEmail`: task and listener identifiers, the
+mxRaven message reference, acceptance and occurrence timestamps, the routing
+decision, verdicts, the SMTP envelope, the parsed message summary and headers,
+and raw-message access.
+
+`MessageRef` is how an event is joined to a send the caller already performed.
+For an outbound listener it is the value a `Send` reported as
+`Result.MessageRef`, so an accepted event or attempt can be matched to the
+submission that produced it without inspecting headers or guessing from
+recency. `TaskID` is derived rather than reported and is not stable across a
+fan-out, so it is not a substitute.
 
 ```go
 if event.Accepted != nil {
@@ -160,7 +168,9 @@ can produce several attempt events. `AttemptEvent.Channel` names the worker:
 
 Every attempt carries `CorrelationID`, which is the `TaskID` of the accepted
 event for the message the attempt stems from. A submission listener's attempts
-already share the accepted event's `TaskID`.
+already share the accepted event's `TaskID`. Every attempt also carries
+`MessageRef`, the message reference of the send, which groups the attempts of a
+fan-out without resolving their accepted events first.
 
 ## Retention and delivery
 

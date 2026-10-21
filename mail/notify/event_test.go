@@ -37,6 +37,7 @@ const (
 		"task_id": "task-1",
 		"tenant_id": "tenant-1",
 		"listener_id": "listener-1",
+		"message_ref": "message-ref-1",
 		"correlation_id": "accepted-1",
 		"status": "deferred",
 		"attempt": 3,
@@ -59,6 +60,7 @@ const (
 		"task_id": "task-1",
 		"tenant_id": "tenant-1",
 		"listener_id": "listener-1",
+		"message_ref": "message-ref-1",
 		"correlation_id": "accepted-1",
 		"status": "delivered",
 		"attempt": 2,
@@ -77,6 +79,7 @@ const (
 		"task_id": "task-1",
 		"tenant_id": "tenant-1",
 		"listener_id": "listener-1",
+		"message_ref": "message-ref-1",
 		"correlation_id": "accepted-1",
 		"status": "failed",
 		"attempt": 1,
@@ -141,6 +144,9 @@ func TestDecodeAttemptChannels(t *testing.T) {
 			}
 			if got, want := event.Attempt.CorrelationID, "accepted-1"; got != want {
 				t.Errorf("CorrelationID = %q, want %q", got, want)
+			}
+			if got, want := event.Attempt.MessageRef, "message-ref-1"; got != want {
+				t.Errorf("MessageRef = %q, want %q", got, want)
 			}
 		})
 	}

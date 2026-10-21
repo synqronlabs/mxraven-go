@@ -33,6 +33,7 @@ func TestDecodeDeliveryStatus(t *testing.T) {
 		"task_id": "task-1",
 		"tenant_id": "tenant-1",
 		"listener_id": "listener-1",
+		"message_ref": "message-ref-1",
 		"status": "deferred",
 		"attempt": 2,
 		"accepted_at_utc": 1789302600,
@@ -57,6 +58,9 @@ func TestDecodeDeliveryStatus(t *testing.T) {
 	if event.DeliveryStatus.SMTPCode != 451 {
 		t.Errorf("SMTPCode = %d", event.DeliveryStatus.SMTPCode)
 	}
+	if event.DeliveryStatus.MessageRef != "message-ref-1" {
+		t.Errorf("MessageRef = %q", event.DeliveryStatus.MessageRef)
+	}
 }
 
 func TestDecodeStorageStatus(t *testing.T) {
@@ -65,6 +69,7 @@ func TestDecodeStorageStatus(t *testing.T) {
 		"task_id": "task-1",
 		"tenant_id": "tenant-1",
 		"listener_id": "listener-1",
+		"message_ref": "message-ref-1",
 		"status": "delivered",
 		"attempt": 1,
 		"occurred_at_utc": 1789302700,
@@ -87,6 +92,9 @@ func TestDecodeStorageStatus(t *testing.T) {
 	}
 	if event.StorageStatus.ObjectKey != "2026/09/task-1.eml" {
 		t.Errorf("ObjectKey = %q", event.StorageStatus.ObjectKey)
+	}
+	if event.StorageStatus.MessageRef != "message-ref-1" {
+		t.Errorf("MessageRef = %q", event.StorageStatus.MessageRef)
 	}
 }
 
